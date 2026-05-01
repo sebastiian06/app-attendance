@@ -1,7 +1,5 @@
-// 🔹 URL base del backend
 const API_URL = 'http://localhost:4000/api/sessions';
 
-// 🔹 Crear sesión (llama al backend)
 export async function createSession(unitId: string) {
   try {
     const res = await fetch(API_URL, {
@@ -18,28 +16,26 @@ export async function createSession(unitId: string) {
 
     const data = await res.json();
 
-    // 🔹 Guardamos solo para uso temporal en frontend
+    console.log('SESSION API:', data);
+
     localStorage.setItem('session', JSON.stringify(data));
 
     return data;
   } catch (error) {
-    console.error(error);
+    console.error('ERROR createSession:', error);
     return null;
   }
 }
 
-// 🔹 Obtener sesión actual (temporal)
 export function getSession() {
   const data = localStorage.getItem('session');
   return data ? JSON.parse(data) : null;
 }
 
-// 🔹 Cerrar sesión (solo frontend por ahora)
 export function closeSession() {
   localStorage.removeItem('session');
 }
 
-// 🔹 Validar expiración (frontend UX)
 export function isSessionExpired(session: any) {
   if (!session) return true;
 

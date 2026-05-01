@@ -20,7 +20,7 @@ export const registerAttendance = async (req: Request, res: Response) => {
   }
 
   // ❌ Expirado
-  if (new Date() > session.expiresAt) {
+  if (!session.expiresAt || new Date() > new Date(session.expiresAt)) {
     await Attendance.create({
       sessionId: session._id,
       documento,
