@@ -1,3 +1,4 @@
+import { QRCodeCanvas } from 'qrcode.react';
 import {
   IonPage,
   IonHeader,
@@ -49,6 +50,12 @@ const Session: React.FC = () => {
               <h2>Sesión activa</h2>
               <p><strong>ID:</strong> {session.id}</p>
               <p><strong>QR Token:</strong> {session.qrToken}</p>
+              <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                <QRCodeCanvas
+                  value={`http://localhost:5173/attendance/${session.qrToken}`}
+                  size={200}
+                />
+              </div>
             </IonText>
 
             <IonButton color="danger" expand="block" onClick={handleClose}>
