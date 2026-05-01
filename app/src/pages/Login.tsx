@@ -1,25 +1,72 @@
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
-import ExploreContainer from '../components/ExploreContainer';
-import './Tab1.css';
+import {
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonInput,
+  IonButton,
+  IonItem,
+  IonLabel,
+  IonText
+} from '@ionic/react';
+import { useState } from 'react';
+import { login } from '../services/api';
 
-const Tab1: React.FC = () => {
+const Login: React.FC = () => {
+  const [documento, setDocumento] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleLogin = async () => {
+    try {
+      setError('');
+      const response = await login(documento, password);
+      console.log('Login exitoso:', response);
+      alert('Login exitoso');
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonTitle>Tab 1</IonTitle>
+          <IonTitle>Login Docente</IonTitle>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen>
-        <IonHeader collapse="condense">
-          <IonToolbar>
-            <IonTitle size="large">Tab 1</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <ExploreContainer name="Tab 1 page" />
+
+      <IonContent className="ion-padding">
+        <IonItem>
+          <IonLabel position="stacked">Documento</IonLabel>
+          <IonInput
+            value={documento}
+            onIonChange={(e) => setDocumento(e.detail.value!)}
+          />
+        </IonItem>
+
+        <IonItem>
+          <IonLabel position="stacked">Contraseña</IonLabel>
+          <IonInput
+            type="password"
+            value={password}
+            onIonChange={(e) => setPassword(e.detail.value!)}
+          />
+        </IonItem>
+
+        {error && (
+          <IonText color="danger">
+            <p>{error}</p>
+          </IonText>
+        )}
+
+        <IonButton expand="block" onClick={handleLogin}>
+          Iniciar sesión
+        </IonButton>
       </IonContent>
     </IonPage>
   );
 };
 
-export default Tab1;
+export default Login;
