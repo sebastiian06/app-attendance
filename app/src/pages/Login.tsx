@@ -12,18 +12,21 @@ import {
 } from '@ionic/react';
 import { useState } from 'react';
 import { login } from '../services/api';
+import { useHistory } from 'react-router-dom';
 
 const Login: React.FC = () => {
   const [documento, setDocumento] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-
+  const history = useHistory();
   const handleLogin = async () => {
     try {
       setError('');
-      const response = await login(documento, password);
-      console.log('Login exitoso:', response);
-      alert('Login exitoso');
+      await login(documento, password);
+
+      // 🔹 Redirección
+      history.push('/session');
+
     } catch (err: any) {
       setError(err.message);
     }

@@ -62,19 +62,23 @@ const App: React.FC = () => (
             <Results />
           </Route>
           <Route exact path="/">
-            <Redirect to="/login" />
+            {localStorage.getItem('token') ? (
+              <Redirect to="/session" />
+            ) : (
+              <Redirect to="/login" />
+            )}
           </Route>
         </IonRouterOutlet>
         <IonTabBar slot="bottom">
-          <IonTabButton tab="tab1" href="/login">
+          <IonTabButton tab="login" href="/login">
             <IonIcon aria-hidden="true" icon={triangle} />
             <IonLabel>Login</IonLabel>
           </IonTabButton>
-          <IonTabButton tab="tab2" href="/session">
+          <IonTabButton tab="session" href="/session">
             <IonIcon aria-hidden="true" icon={ellipse} />
             <IonLabel>Session</IonLabel>
           </IonTabButton>
-          <IonTabButton tab="tab3" href="/results">
+          <IonTabButton tab="results" href="/results">
             <IonIcon aria-hidden="true" icon={square} />
             <IonLabel>Results</IonLabel>
           </IonTabButton>
