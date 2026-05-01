@@ -25,7 +25,7 @@ const Login: React.FC = () => {
       await login(documento, password);
 
       // 🔹 Redirección
-      history.push('/session');
+      history.push('/units');
 
     } catch (err: any) {
       setError(err.message);

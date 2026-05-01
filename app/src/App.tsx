@@ -15,6 +15,7 @@ import Login from './pages/Login';
 import Session from './pages/Session';
 import Results from './pages/Results';
 import Attendance from './pages/Attendance';
+import UnitSelection from './pages/UnitSelection';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -70,6 +71,7 @@ const App: React.FC = () => (
             )}
           </Route>
           <Route path="/attendance/:token" component={Attendance} />
+          <Route path="/units" component={UnitSelection} />
         </IonRouterOutlet>
         <IonTabBar slot="bottom">
           <IonTabButton tab="login" href="/login">
