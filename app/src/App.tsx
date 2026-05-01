@@ -14,6 +14,7 @@ import { ellipse, square, triangle } from 'ionicons/icons';
 import Login from './pages/Login';
 import Session from './pages/Session';
 import Results from './pages/Results';
+import Attendance from './pages/Attendance';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -68,6 +69,7 @@ const App: React.FC = () => (
               <Redirect to="/login" />
             )}
           </Route>
+          <Route path="/attendance/:token" component={Attendance} />
         </IonRouterOutlet>
         <IonTabBar slot="bottom">
           <IonTabButton tab="login" href="/login">
