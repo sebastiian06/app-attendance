@@ -12,6 +12,7 @@ import {
 } from '@ionic/react';
 import { useParams } from 'react-router-dom';
 import { useState } from 'react';
+import { registerAttendance } from '../services/attendance';
 
 const Attendance: React.FC = () => {
   const { token } = useParams<{ token: string }>();
@@ -19,16 +20,19 @@ const Attendance: React.FC = () => {
   const [mensaje, setMensaje] = useState('');
 
   const handleRegister = () => {
-    if (!documento) {
-      setMensaje('Ingrese su documento');
-      return;
-    }
+  if (!documento) {
+    setMensaje('Ingrese su documento');
+    return;
+  }
 
-    // 🔴 MOCK de registro
-    console.log('Registro enviado:', { token, documento });
+  const result = registerAttendance(token, documento);
 
+  if (result.status === 'ACCEPTED') {
     setMensaje('Asistencia registrada correctamente');
-  };
+  } else {
+    setMensaje(result.reason || 'Error en el registro');
+  }
+};
 
   return (
     <IonPage>
