@@ -1,34 +1,45 @@
-const QR_TTL_MINUTES = 1; // 🔴 puedes cambiar a 10 después
+// 🔹 URL base del backend
+const API_URL = 'http://localhost:4000/api/sessions';
 
-export function createSession() {
-  const now = new Date();
+// 🔹 Crear sesión (llama al backend)
+export async function createSession(unitId: string) {
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ unitId })
+    });
 
-  const expiresAt = new Date(
-    now.getTime() + QR_TTL_MINUTES * 60 * 1000
-  );
+    if (!res.ok) {
+      throw new Error('Error al crear la sesión');
+    }
 
-  const session = {
-    id: Date.now().toString(),
-    qrToken: Math.random().toString(36).substring(2, 10),
-    status: 'ACTIVE',
-    createdAt: now.toISOString(),
-    expiresAt: expiresAt.toISOString()
-  };
+    const data = await res.json();
 
-  localStorage.setItem('session', JSON.stringify(session));
+    // 🔹 Guardamos solo para uso temporal en frontend
+    localStorage.setItem('session', JSON.stringify(data));
 
-  return session;
+    return data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
 }
 
+// 🔹 Obtener sesión actual (temporal)
 export function getSession() {
   const data = localStorage.getItem('session');
   return data ? JSON.parse(data) : null;
 }
 
+// 🔹 Cerrar sesión (solo frontend por ahora)
 export function closeSession() {
   localStorage.removeItem('session');
 }
 
+// 🔹 Validar expiración (frontend UX)
 export function isSessionExpired(session: any) {
   if (!session) return true;
 
