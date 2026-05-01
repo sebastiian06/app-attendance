@@ -1,4 +1,6 @@
-// 🔹 Tipos (muy importante para evitar errores)
+import { isSessionExpired } from './session';
+
+// 🔹 Tipos
 type AttendanceRecord = {
   sessionId: string;
   documento: string;
@@ -11,14 +13,14 @@ type AttendanceResult =
   | { status: 'ACCEPTED' }
   | { status: 'REJECTED'; reason: string };
 
-// 🔹 Mock de estudiantes (luego vendrá del backend)
+// 🔹 Mock estudiantes
 const estudiantes = [
   { documento: 'EST-001', nombre: 'Juan' },
   { documento: 'EST-002', nombre: 'Maria' },
   { documento: 'EST-003', nombre: 'Carlos' }
 ];
 
-// 🔹 Helper seguro para localStorage
+// 🔹 Helper seguro
 function getLocalData<T>(key: string, fallback: T): T {
   try {
     const data = localStorage.getItem(key);
@@ -28,6 +30,13 @@ function getLocalData<T>(key: string, fallback: T): T {
   }
 }
 
+// 🔹 Guardar registro
+function saveRecord(record: AttendanceRecord) {
+  const records = getLocalData<AttendanceRecord[]>('attendance', []);
+  records.push(record);
+  localStorage.setItem('attendance', JSON.stringify(records));
+}
+
 // 🔹 Registrar asistencia
 export function registerAttendance(
   token: string,
@@ -35,6 +44,7 @@ export function registerAttendance(
 ): AttendanceResult {
   const session = getLocalData<any>('session', null);
 
+  // ❌ Sesión inválida
   if (!session || session.qrToken !== token) {
     const record: AttendanceRecord = {
       sessionId: session?.id || 'unknown',
@@ -47,8 +57,22 @@ export function registerAttendance(
     return { status: 'REJECTED', reason: record.reason! };
   }
 
+  // ❌ QR expirado
+  if (isSessionExpired(session)) {
+    const record: AttendanceRecord = {
+      sessionId: session.id,
+      documento,
+      status: 'REJECTED',
+      reason: 'QR expirado'
+    };
+
+    saveRecord(record);
+    return { status: 'REJECTED', reason: 'QR expirado' };
+  }
+
   const estudiante = estudiantes.find(e => e.documento === documento);
 
+  // ❌ No inscrito
   if (!estudiante) {
     const record: AttendanceRecord = {
       sessionId: session.id,
@@ -67,6 +91,7 @@ export function registerAttendance(
     r => r.sessionId === session.id && r.documento === documento
   );
 
+  // ❌ Duplicado
   if (duplicado) {
     const record: AttendanceRecord = {
       sessionId: session.id,
@@ -80,6 +105,7 @@ export function registerAttendance(
     return { status: 'REJECTED', reason: record.reason! };
   }
 
+  // ✅ Registro válido
   const record: AttendanceRecord = {
     sessionId: session.id,
     documento,
@@ -92,14 +118,7 @@ export function registerAttendance(
   return { status: 'ACCEPTED' };
 }
 
-// 🔹 Guardar registro (centralizado)
-function saveRecord(record: AttendanceRecord) {
-  const records = getLocalData<AttendanceRecord[]>('attendance', []);
-  records.push(record);
-  localStorage.setItem('attendance', JSON.stringify(records));
-}
-
-// 🔹 Obtener registros por sesión
+// 🔹 Obtener registros
 export function getAttendanceBySession(): AttendanceRecord[] {
   const session = getLocalData<any>('session', null);
   const records = getLocalData<AttendanceRecord[]>('attendance', []);

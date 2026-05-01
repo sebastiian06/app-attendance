@@ -30,7 +30,7 @@ const Attendance: React.FC = () => {
   if (result.status === 'ACCEPTED') {
     setMensaje('Asistencia registrada correctamente');
   } else {
-    setMensaje(result.reason || 'Error en el registro');
+    setMensaje(result.reason ?? 'Error en el registro');
   }
 };
 

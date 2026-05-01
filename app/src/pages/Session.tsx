@@ -9,15 +9,19 @@ import {
   IonText
 } from '@ionic/react';
 import { useEffect, useState } from 'react';
-import { createSession, getSession, closeSession } from '../services/session';
+import {
+  createSession,
+  getSession,
+  closeSession,
+  isSessionExpired
+} from '../services/session';
 
 const Session: React.FC = () => {
   const [session, setSession] = useState<any>(null);
+  const [timeLeft, setTimeLeft] = useState<number>(0);
 
-  // 🔹 Obtener unidad seleccionada
   const unit = JSON.parse(localStorage.getItem('unit') || 'null');
 
-  // 🔹 Mock de estudiantes inscritos
   const estudiantes = [
     { documento: 'EST-001', nombre: 'Juan' },
     { documento: 'EST-002', nombre: 'Maria' },
@@ -26,12 +30,29 @@ const Session: React.FC = () => {
 
   useEffect(() => {
     const existing = getSession();
-    if (existing) {
-      setSession(existing);
-    }
+    if (existing) setSession(existing);
   }, []);
 
+  useEffect(() => {
+    if (!session) return;
+
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const expires = new Date(session.expiresAt).getTime();
+
+      const diff = Math.max(0, Math.floor((expires - now) / 1000));
+      setTimeLeft(diff);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [session]);
+
   const handleCreate = () => {
+    if (session && !isSessionExpired(session)) {
+      alert('Ya hay una sesión activa');
+      return;
+    }
+
     const newSession = createSession();
     setSession(newSession);
   };
@@ -41,19 +62,12 @@ const Session: React.FC = () => {
     setSession(null);
   };
 
-  // 🔴 Validación: no hay unidad seleccionada
   if (!unit) {
     return (
       <IonPage>
-        <IonHeader>
-          <IonToolbar>
-            <IonTitle>Sesión QR</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-
         <IonContent className="ion-padding">
           <IonText color="danger">
-            <p>Debe seleccionar una unidad antes de crear la sesión</p>
+            <p>Debe seleccionar una unidad primero</p>
           </IonText>
         </IonContent>
       </IonPage>
@@ -70,50 +84,48 @@ const Session: React.FC = () => {
 
       <IonContent className="ion-padding">
 
-        {/* 🔹 Información de la unidad */}
-        <IonText>
-          <h2>Unidad seleccionada</h2>
-          <p><strong>{unit.nombre}</strong></p>
-        </IonText>
+        <h2>{unit.nombre}</h2>
 
-        {/* 🔹 Lista de estudiantes */}
-        <div style={{ marginTop: '20px' }}>
-          <h3>Estudiantes inscritos</h3>
-          <ul>
-            {estudiantes.map((e) => (
-              <li key={e.documento}>
-                {e.nombre} ({e.documento})
-              </li>
-            ))}
-          </ul>
-        </div>
+        <h3>Estudiantes inscritos</h3>
+        <ul>
+          {estudiantes.map(e => (
+            <li key={e.documento}>
+              {e.nombre} ({e.documento})
+            </li>
+          ))}
+        </ul>
 
-        {/* 🔹 Crear sesión */}
         {!session ? (
           <IonButton expand="block" onClick={handleCreate}>
             Crear sesión
           </IonButton>
         ) : (
           <>
-            <div style={{ marginTop: '20px' }}>
-              <h2>Sesión activa</h2>
-              <p><strong>ID:</strong> {session.id}</p>
-              <p><strong>QR Token:</strong> {session.qrToken}</p>
-            </div>
+            <h2>Sesión activa</h2>
 
-            {/* 🔹 QR */}
-            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+            <p><strong>ID:</strong> {session.id}</p>
+            <p><strong>Token:</strong> {session.qrToken}</p>
+
+            <div style={{ textAlign: 'center', marginTop: 20 }}>
               <QRCodeCanvas
                 value={`http://localhost:5173/attendance/${session.qrToken}`}
                 size={200}
               />
             </div>
 
+            <p>
+              <strong>Estado:</strong>{' '}
+              {isSessionExpired(session) ? 'Expirado' : 'Activo'}
+            </p>
+
+            <p>
+              <strong>Tiempo restante:</strong> {timeLeft}s
+            </p>
+
             <IonButton
               color="danger"
               expand="block"
               onClick={handleClose}
-              style={{ marginTop: '20px' }}
             >
               Cerrar sesión
             </IonButton>
