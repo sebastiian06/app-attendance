@@ -7,18 +7,14 @@ import {
   IonContent,
   IonInput,
   IonButton,
-  IonItem,
-  IonLabel,
   IonText,
   IonLoading,
-  IonIcon,
-  IonCard,
-  IonCardContent
+  IonIcon
 } from '@ionic/react';
 import { useState } from 'react';
 import { login } from '../services/api';
 import { useHistory } from 'react-router-dom';
-import { schoolOutline, qrCodeOutline, logInOutline, personOutline, keyOutline } from 'ionicons/icons';
+import { schoolOutline, logInOutline, qrCodeOutline } from 'ionicons/icons';
 
 const Login: React.FC = () => {
   const [documento, setDocumento] = useState('');
@@ -32,7 +28,7 @@ const Login: React.FC = () => {
       setError('Por favor ingrese su documento');
       return;
     }
-    
+
     if (!password.trim()) {
       setError('Por favor ingrese su contraseña');
       return;
@@ -65,89 +61,165 @@ const Login: React.FC = () => {
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
-        <IonLoading isOpen={loading} message="Iniciando sesión..." />
+      <IonContent className="ion-padding" style={{ '--background': '#f5f7fa' }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: 'calc(100vh - 56px)'
+        }}>
 
-        {/* Logo y título */}
-        <div className="ion-text-center" style={{ marginTop: '40px', marginBottom: '40px' }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #4CAF50, #2E7D32)',
-            width: '80px',
-            height: '80px',
-            borderRadius: '20px',
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 10px 25px rgba(76,175,80,0.3)'
-          }}>
-            <IonIcon icon={schoolOutline} style={{ fontSize: '45px', color: 'white' }} />
+          <div style={{ width: '100%', maxWidth: '380px' }}>
+
+            <IonLoading isOpen={loading} message="Iniciando sesión..." />
+
+            {/* Logo */}
+            <div style={{ textAlign: 'center', marginBottom: '35px' }}>
+              <div style={{
+                background: 'linear-gradient(135deg, #4CAF50, #2E7D32)',
+                width: '72px',
+                height: '72px',
+                borderRadius: '18px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 8px 20px rgba(76,175,80,0.3)'
+              }}>
+                <IonIcon icon={schoolOutline} style={{ fontSize: '38px', color: 'white' }} />
+              </div>
+
+              <h2 style={{ marginTop: '18px', marginBottom: '6px', color: '#222' }}>
+                App Attendance
+              </h2>
+
+              <p style={{ fontSize: '13px', color: '#777' }}>
+                Sistema de Asistencia Académica
+              </p>
+            </div>
+
+            {/* Card */}
+            <div style={{
+              background: '#fff',
+              padding: '24px',
+              borderRadius: '18px',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.08)'
+            }}>
+
+              {/* Documento */}
+              <div style={{ marginBottom: '18px' }}>
+                <label style={{ fontSize: '12px', color: '#666' }}>
+                  Documento
+                </label>
+
+                <IonInput
+                  className="material-input"
+                  value={documento}
+                  onIonChange={(e) => setDocumento(e.detail.value || '')}
+                  placeholder="DOCENTE-001"
+                />
+              </div>
+
+              {/* Password */}
+              <div style={{ marginBottom: '18px' }}>
+                <label style={{ fontSize: '12px', color: '#666' }}>
+                  Contraseña
+                </label>
+
+                <IonInput
+                  className="material-input"
+                  type="password"
+                  value={password}
+                  onIonChange={(e) => setPassword(e.detail.value || '')}
+                  placeholder="••••••••"
+                />
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div style={{
+                  background: '#ffebee',
+                  padding: '10px',
+                  borderRadius: '10px',
+                  textAlign: 'center',
+                  marginBottom: '16px',
+                  fontSize: '13px'
+                }}>
+                  <IonText color="danger">{error}</IonText>
+                </div>
+              )}
+
+              {/* Botones */}
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+
+                <button
+                  onClick={handleLogin}
+                  disabled={loading}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    backgroundColor: 'transparent',
+                    border: '1px solid #4CAF50',
+                    borderRadius: '12px',
+                    color: '#4CAF50',
+                    fontWeight: '500',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f5f5f5';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  Iniciar sesión
+                </button>
+
+                <button
+                  onClick={fillDemoCredentials}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    backgroundColor: 'transparent',
+                    border: '1px solid #4CAF50',
+                    borderRadius: '12px',
+                    color: '#4CAF50',
+                    fontWeight: '500',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f5f5f5';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  Usar credenciales de prueba
+                </button>
+            </div>
+
+            {/* Footer */}
+            <div style={{
+              textAlign: 'center',
+              marginTop: '25px',
+              fontSize: '12px',
+              color: '#999'
+            }}>
+              <IonIcon icon={qrCodeOutline} style={{ marginRight: '4px' }} />
+              Sistema de Asistencia por QR
+            </div>
+
           </div>
-          <h1 style={{ marginTop: '20px', marginBottom: '5px', fontSize: '28px', fontWeight: 'bold' }}>
-            App Attendance
-          </h1>
-          <p style={{ color: '#666', marginTop: '0' }}>
-            Sistema de Asistencia Académica
-          </p>
         </div>
-
-        {/* Formulario */}
-        <IonCard style={{ borderRadius: '20px', marginTop: '20px' }}>
-          <IonCardContent>
-            <IonItem lines="none">
-              <IonIcon icon={personOutline} slot="start" color="primary" />
-              <IonLabel position="stacked">Documento</IonLabel>
-              <IonInput
-                type="text"
-                value={documento}
-                onIonChange={(e) => setDocumento(e.detail.value || '')}
-                placeholder="Ej: DOCENTE-001"
-                autocomplete="off"
-              />
-            </IonItem>
-
-            <IonItem lines="none" style={{ marginTop: '15px' }}>
-              <IonIcon icon={keyOutline} slot="start" color="primary" />
-              <IonLabel position="stacked">Contraseña</IonLabel>
-              <IonInput
-                type="password"
-                value={password}
-                onIonChange={(e) => setPassword(e.detail.value || '')}
-                placeholder="********"
-              />
-            </IonItem>
-
-            {error && (
-              <IonText color="danger">
-                <p style={{ marginLeft: '16px', marginTop: '10px', fontSize: '14px' }}>{error}</p>
-              </IonText>
-            )}
-
-            <IonButton 
-              expand="block" 
-              onClick={handleLogin}
-              disabled={loading}
-              style={{ marginTop: '25px', height: '48px' }}
-            >
-              <IonIcon slot="start" icon={logInOutline} />
-              Iniciar sesión
-            </IonButton>
-
-            <IonButton 
-              expand="block" 
-              fill="clear" 
-              onClick={fillDemoCredentials}
-              style={{ marginTop: '10px' }}
-            >
-              Usar credenciales de prueba
-            </IonButton>
-          </IonCardContent>
-        </IonCard>
-
-        {/* Footer */}
-        <div className="ion-text-center" style={{ marginTop: '30px', color: '#999', fontSize: '12px' }}>
-          <IonIcon icon={qrCodeOutline} style={{ verticalAlign: 'middle', marginRight: '5px' }} />
-          Sistema de Asistencia por QR
-        </div>
+      </div>
       </IonContent>
     </IonPage>
   );

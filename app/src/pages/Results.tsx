@@ -10,11 +10,6 @@ import {
   IonButton,
   IonLoading,
   IonText,
-  IonCard,
-  IonCardContent,
-  IonList,
-  IonItem,
-  IonLabel,
   IonIcon,
   IonChip,
   IonSegment,
@@ -23,9 +18,8 @@ import {
   IonRefresher,
   IonRefresherContent,
   IonAlert,
-  IonGrid,
-  IonRow,
-  IonCol
+  IonFab,
+  IonFabButton
 } from '@ionic/react';
 import { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
@@ -36,7 +30,11 @@ import {
   timeOutline,
   refreshOutline,
   printOutline,
-  downloadOutline
+  downloadOutline,
+  calendarOutline,
+  schoolOutline,
+  idCardOutline,
+  qrCodeOutline
 } from 'ionicons/icons';
 import { getSessionResults } from '../services/api';
 
@@ -56,18 +54,17 @@ interface AttendanceRecord {
   rejectReason?: string;
 }
 
-interface SessionData {
-  _id: string;
-  unitId: string;
-  institutionId: string;
-  status: string;
-  qrToken: string;
-  expiresAt: string;
-  createdAt: string;
-}
-
 interface ResultsData {
-  session: SessionData;
+  session: {
+    _id: string;
+    unitId: string;
+    institutionId: string;
+    status: string;
+    qrToken: string;
+    roomCode?: string;
+    expiresAt: string;
+    createdAt: string;
+  };
   students: Student[];
   attendance: AttendanceRecord[];
   summary: {
@@ -106,19 +103,10 @@ const Results: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
-      console.log('📡 Cargando resultados para sesión:', sessionId);
-      
       const data = await getSessionResults(sessionId);
-      console.log('✅ Resultados recibidos:', data);
-      
       setResults(data);
-      
     } catch (err: any) {
-      console.error('❌ Error cargando resultados:', err);
       setError(err.message || 'No se pudieron cargar los resultados');
-      setAlertMessage(err.message || 'Error al cargar los resultados');
-      setShowAlert(true);
     } finally {
       setLoading(false);
     }
@@ -149,14 +137,10 @@ const Results: React.FC = () => {
 
   const getFilteredStudents = () => {
     if (!results) return [];
-    
     switch (segment) {
-      case 'present':
-        return getPresentStudents();
-      case 'absent':
-        return getAbsentStudents();
-      default:
-        return results.students;
+      case 'present': return getPresentStudents();
+      case 'absent': return getAbsentStudents();
+      default: return results.students;
     }
   };
 
@@ -165,22 +149,15 @@ const Results: React.FC = () => {
     return date.toLocaleString('es-CO', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
   };
 
-  const formatTimeLeft = (expiresAt: string) => {
-    const now = new Date().getTime();
-    const expires = new Date(expiresAt).getTime();
-    const diff = Math.max(0, Math.floor((expires - now) / 1000));
-    
-    if (diff === 0) return 'Expirada';
-    
-    const minutes = Math.floor(diff / 60);
-    const seconds = diff % 60;
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  const getAttendanceRateColor = (rate: number) => {
+    if (rate >= 80) return 'success';
+    if (rate >= 60) return 'warning';
+    return 'danger';
   };
 
   const handlePrint = () => {
@@ -216,12 +193,6 @@ const Results: React.FC = () => {
     document.body.removeChild(link);
   };
 
-  const getAttendanceRateColor = (rate: number) => {
-    if (rate >= 80) return 'success';
-    if (rate >= 60) return 'warning';
-    return 'danger';
-  };
-
   if (!sessionId) {
     return (
       <IonPage>
@@ -234,12 +205,10 @@ const Results: React.FC = () => {
           </IonToolbar>
         </IonHeader>
         <IonContent className="ion-padding">
-          <IonText color="danger">
-            <p>No hay una sesión activa</p>
-          </IonText>
-          <IonButton expand="block" onClick={() => history.push('/session')}>
-            Crear Sesión
-          </IonButton>
+          <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
+            <IonText color="danger"><p>No hay una sesión activa</p></IonText>
+            <IonButton expand="block" onClick={() => history.push('/session')}>Crear Sesión</IonButton>
+          </div>
         </IonContent>
       </IonPage>
     );
@@ -249,164 +218,237 @@ const Results: React.FC = () => {
     <IonPage>
       <IonHeader>
         <IonToolbar>
-          <IonButtons slot="start">
-            <IonBackButton defaultHref="/session" />
-          </IonButtons>
+          <IonButtons slot="start"><IonBackButton defaultHref="/session" /></IonButtons>
           <IonTitle>Resultados</IonTitle>
           <IonButtons slot="end">
-            <IonButton onClick={handlePrint}>
-              <IonIcon slot="icon-only" icon={printOutline} />
-            </IonButton>
-            <IonButton onClick={handleExport}>
-              <IonIcon slot="icon-only" icon={downloadOutline} />
-            </IonButton>
+            <IonButton onClick={handlePrint}><IonIcon slot="icon-only" icon={printOutline} /></IonButton>
+            <IonButton onClick={handleExport}><IonIcon slot="icon-only" icon={downloadOutline} /></IonButton>
           </IonButtons>
         </IonToolbar>
       </IonHeader>
 
       <IonContent className="ion-padding">
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-          <IonRefresherContent 
-            pullingIcon={refreshOutline} 
-            pullingText="Desliza para actualizar" 
-          />
+          <IonRefresherContent pullingIcon={refreshOutline} pullingText="Desliza para actualizar" />
         </IonRefresher>
 
         <IonLoading isOpen={loading} message="Cargando resultados..." />
 
-        {error && (
-          <IonText color="danger">
-            <p>{error}</p>
-          </IonText>
-        )}
+        <div style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
+          
+          {error && (
+            <div style={{ backgroundColor: '#ffebee', padding: '12px', borderRadius: '12px', marginBottom: '20px', textAlign: 'center' }}>
+              <IonText color="danger"><p style={{ margin: 0 }}>{error}</p></IonText>
+            </div>
+          )}
 
-        {results && (
-          <>
-            {/* Resumen de asistencia */}
-            <IonCard>
-              <IonCardContent>
-                <IonGrid>
-                  <IonRow>
-                    <IonCol size="12" style={{ textAlign: 'center' }}>
-                      <h3 style={{ marginTop: 0 }}>Resumen de Asistencia</h3>
-                    </IonCol>
-                  </IonRow>
-                  <IonRow>
-                    <IonCol size="4" style={{ textAlign: 'center' }}>
-                      <IonIcon 
-                        icon={peopleOutline} 
-                        style={{ fontSize: '32px', color: '#3880ff' }} 
-                      />
-                      <p style={{ margin: '5px 0 0 0' }}>
-                        <strong>{results.summary.total}</strong>
-                      </p>
-                      <small>Total</small>
-                    </IonCol>
-                    <IonCol size="4" style={{ textAlign: 'center' }}>
-                      <IonIcon 
-                        icon={checkmarkCircleOutline} 
-                        style={{ fontSize: '32px', color: '#4caf50' }} 
-                      />
-                      <p style={{ margin: '5px 0 0 0' }}>
-                        <strong>{results.summary.present}</strong>
-                      </p>
-                      <small>Presentes</small>
-                    </IonCol>
-                    <IonCol size="4" style={{ textAlign: 'center' }}>
-                      <IonIcon 
-                        icon={closeCircleOutline} 
-                        style={{ fontSize: '32px', color: '#f44336' }} 
-                      />
-                      <p style={{ margin: '5px 0 0 0' }}>
-                        <strong>{results.summary.absent}</strong>
-                      </p>
-                      <small>Ausentes</small>
-                    </IonCol>
-                  </IonRow>
-                  <IonRow>
-                    <IonCol size="12" style={{ textAlign: 'center', marginTop: '10px' }}>
-                      <IonChip color={getAttendanceRateColor(results.summary.attendanceRate)}>
-                        <IonIcon icon={timeOutline} />
-                        <IonLabel>
-                          {results.summary.attendanceRate}% Asistencia
-                        </IonLabel>
-                      </IonChip>
-                    </IonCol>
-                  </IonRow>
-                </IonGrid>
-              </IonCardContent>
-            </IonCard>
+          {results && (
+            <>
+              {/* Tarjetas de resumen */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', 
+                gap: '12px', 
+                marginBottom: '20px' 
+              }}>
+                <div style={{ backgroundColor: '#E3F2FD', borderRadius: '16px', padding: '16px', textAlign: 'center' }}>
+                  <IonIcon icon={peopleOutline} style={{ fontSize: '28px', color: '#2196F3' }} />
+                  <h3 style={{ margin: '8px 0 0 0', fontSize: '24px', fontWeight: 'bold' }}>{results.summary.total}</h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#666' }}>Total</p>
+                </div>
+                <div style={{ backgroundColor: '#E8F5E9', borderRadius: '16px', padding: '16px', textAlign: 'center' }}>
+                  <IonIcon icon={checkmarkCircleOutline} style={{ fontSize: '28px', color: '#4CAF50' }} />
+                  <h3 style={{ margin: '8px 0 0 0', fontSize: '24px', fontWeight: 'bold', color: '#4CAF50' }}>{results.summary.present}</h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#666' }}>Presentes</p>
+                </div>
+                <div style={{ backgroundColor: '#FFEBEE', borderRadius: '16px', padding: '16px', textAlign: 'center' }}>
+                  <IonIcon icon={closeCircleOutline} style={{ fontSize: '28px', color: '#F44336' }} />
+                  <h3 style={{ margin: '8px 0 0 0', fontSize: '24px', fontWeight: 'bold', color: '#F44336' }}>{results.summary.absent}</h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#666' }}>Ausentes</p>
+                </div>
+                <div style={{ backgroundColor: '#FFF3E0', borderRadius: '16px', padding: '16px', textAlign: 'center' }}>
+                  <IonIcon icon={timeOutline} style={{ fontSize: '28px', color: '#FF9800' }} />
+                  <h3 style={{ margin: '8px 0 0 0', fontSize: '24px', fontWeight: 'bold' }}>{results.summary.attendanceRate}%</h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#666' }}>Asistencia</p>
+                </div>
+              </div>
 
-            {/* Información de la sesión */}
-            <IonCard>
-              <IonCardContent>
-                <p><strong>Unidad:</strong> {unit?.name || results.session.unitId}</p>
-                <p><strong>Estado:</strong> 
+              {/* Información de la sesión */}
+              <div style={{ 
+                backgroundColor: '#f5f5f5', 
+                borderRadius: '12px', 
+                padding: '12px 16px', 
+                marginBottom: '20px', 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                flexWrap: 'wrap', 
+                gap: '10px' 
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <IonIcon icon={schoolOutline} color="primary" />
+                  <span><strong>{unit?.name || results.session.unitId}</strong></span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <IonIcon icon={calendarOutline} color="medium" />
+                  <small>{new Date(results.session.createdAt).toLocaleDateString('es-CO')}</small>
                   <IonChip color={results.session.status === 'active' ? 'success' : 'danger'}>
                     {results.session.status === 'active' ? 'Activa' : 'Cerrada'}
                   </IonChip>
-                </p>
-                <p><strong>Tiempo restante:</strong> {formatTimeLeft(results.session.expiresAt)}</p>
-                <p><strong>Creada:</strong> {formatDate(results.session.createdAt)}</p>
-              </IonCardContent>
-            </IonCard>
+                </div>
+              </div>
 
-            {/* Segmento para filtrar */}
-            <IonSegment value={segment} onIonChange={(e) => setSegment(e.detail.value as any)}>
-              <IonSegmentButton value="all">
-                <IonLabel>Todos ({results.students.length})</IonLabel>
-              </IonSegmentButton>
-              <IonSegmentButton value="present">
-                <IonLabel>Presentes ({results.summary.present})</IonLabel>
-              </IonSegmentButton>
-              <IonSegmentButton value="absent">
-                <IonLabel>Ausentes ({results.summary.absent})</IonLabel>
-              </IonSegmentButton>
-            </IonSegment>
+              {/* Segmento mejorado */}
+              <div style={{ 
+                backgroundColor: '#f0f2f5', 
+                borderRadius: '14px', 
+                padding: '6px',
+                marginBottom: '20px'
+              }}>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(3, 1fr)', 
+                  gap: '6px'
+                }}>
+                  <button
+                    onClick={() => setSegment('all')}
+                    style={{
+                      padding: '12px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      fontWeight: '600',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      backgroundColor: segment === 'all' ? '#4CAF50' : 'transparent',
+                      color: segment === 'all' ? 'white' : '#333'
+                    }}
+                  >
+                    Todos ({results.students.length})
+                  </button>
+                  <button
+                    onClick={() => setSegment('present')}
+                    style={{
+                      padding: '12px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      fontWeight: '600',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      backgroundColor: segment === 'present' ? '#4CAF50' : 'transparent',
+                      color: segment === 'present' ? 'white' : '#333'
+                    }}
+                  >
+                    Presentes ({results.summary.present})
+                  </button>
+                  <button
+                    onClick={() => setSegment('absent')}
+                    style={{
+                      padding: '12px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      fontWeight: '600',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      backgroundColor: segment === 'absent' ? '#F44336' : 'transparent',
+                      color: segment === 'absent' ? 'white' : '#333'
+                    }}
+                  >
+                    Ausentes ({results.summary.absent})
+                  </button>
+                </div>
+              </div>
 
-            {/* Lista de estudiantes filtrados */}
-            <div style={{ marginTop: '15px' }}>
+              {/* Tabla de resultados */}
               {getFilteredStudents().length === 0 ? (
-                <IonText color="warning">
-                  <p style={{ textAlign: 'center' }}>No hay estudiantes en esta categoría</p>
-                </IonText>
+                <div style={{ textAlign: 'center', marginTop: '50px' }}>
+                  <IonText color="warning"><p>No hay estudiantes en esta categoría</p></IonText>
+                </div>
               ) : (
-                <IonList>
-                  {getFilteredStudents().map((student) => {
-                    const attendance = results.attendance.find(a => a.personId === student._id);
-                    const isPresent = !!attendance;
-                    
-                    return (
-                      <IonItem key={student._id}>
-                        <IonIcon 
-                          slot="start" 
-                          icon={isPresent ? checkmarkCircleOutline : closeCircleOutline} 
-                          color={isPresent ? 'success' : 'danger'}
-                          style={{ fontSize: '24px' }}
-                        />
-                        <IonLabel>
-                          <h2>{student.nombre}</h2>
-                          <p>Documento: {student.documento}</p>
-                          {student.matricula && <p>Matrícula: {student.matricula}</p>}
-                        </IonLabel>
-                        {isPresent && attendance && (
-                          <IonBadge color="success" slot="end">
-                            {formatDate(attendance.registeredAt).split(',')[1]}
-                          </IonBadge>
-                        )}
-                        {!isPresent && (
-                          <IonBadge color="danger" slot="end">
-                            Ausente
-                          </IonBadge>
-                        )}
-                      </IonItem>
-                    );
-                  })}
-                </IonList>
+                <div style={{ 
+                  backgroundColor: 'white', 
+                  borderRadius: '16px', 
+                  overflow: 'auto',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                }}>
+                  {/* Cabecera de la tabla */}
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '50px 2fr 1.5fr 1.2fr 1fr',
+                    backgroundColor: segment === 'present' ? '#4CAF50' : (segment === 'absent' ? '#F44336' : '#2196F3'),
+                    color: 'white',
+                    padding: '12px 16px',
+                    fontWeight: 'bold',
+                    fontSize: '13px',
+                    minWidth: '500px'
+                  }}>
+                    <div>#</div>
+                    <div>Nombre</div>
+                    <div>Documento</div>
+                    <div>Matrícula</div>
+                    <div>Estado</div>
+                  </div>
+                  
+                  {/* Cuerpo de la tabla */}
+                  <div style={{ minWidth: '500px' }}>
+                    {getFilteredStudents().map((student, index) => {
+                      const attendance = results.attendance.find(a => a.personId === student._id);
+                      return (
+                        <div 
+                          key={student._id}
+                          style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: '50px 2fr 1.5fr 1.2fr 1fr',
+                            padding: '12px 16px',
+                            borderBottom: '1px solid #f0f0f0',
+                            backgroundColor: index % 2 === 0 ? '#fff' : '#f9f9f9',
+                            fontSize: '13px',
+                            alignItems: 'center'
+                          }}
+                        >
+                          <div style={{ fontWeight: 'bold', color: '#4CAF50' }}>{index + 1}</div>
+                          <div>{student.nombre}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <IonIcon icon={idCardOutline} style={{ fontSize: '12px', color: '#666' }} />
+                            {student.documento}
+                          </div>
+                          <div>
+                            {student.matricula ? (
+                              <IonBadge color="medium" style={{ fontSize: '11px' }}>{student.matricula}</IonBadge>
+                            ) : (
+                              <span style={{ color: '#ccc' }}>—</span>
+                            )}
+                          </div>
+                          <div>
+                            {attendance ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <IonBadge color="success" style={{ fontSize: '11px' }}>Presente</IonBadge>
+                                <small style={{ fontSize: '10px', color: '#666' }}>
+                                  {formatDate(attendance.registeredAt).split(',')[1]}
+                                </small>
+                              </div>
+                            ) : (
+                              <IonBadge color="danger" style={{ fontSize: '11px' }}>Ausente</IonBadge>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
+
+        {/* Botón flotante */}
+        <IonFab slot="fixed" vertical="bottom" horizontal="end">
+          <IonFabButton onClick={() => history.push('/session')}>
+            <IonIcon icon={qrCodeOutline} />
+          </IonFabButton>
+        </IonFab>
 
         <IonAlert
           isOpen={showAlert}
@@ -424,5 +466,4 @@ const Results: React.FC = () => {
     </IonPage>
   );
 };
-
 export default Results;

@@ -2,9 +2,6 @@
 import {
   IonContent,
   IonPage,
-  IonList,
-  IonItem,
-  IonLabel,
   IonToolbar,
   IonTitle,
   IonHeader,
@@ -13,27 +10,28 @@ import {
   IonLoading,
   IonText,
   IonButton,
-  IonAvatar,
   IonIcon,
   IonChip,
   IonRefresher,
   IonRefresherContent,
   IonAlert,
   IonBadge,
-  IonCard
+  IonLabel
 } from '@ionic/react';
 import { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import { 
   personOutline, 
-  schoolOutline, 
   refreshOutline, 
   qrCodeOutline, 
-  peopleOutline
+  peopleOutline,
+  checkmarkCircleOutline,
+  closeCircleOutline,
+  idCardOutline,
+  schoolOutline
 } from 'ionicons/icons';
 import { getStudentsByUnit } from '../services/api';
 
-// Interfaces
 interface Student {
   _id: string;
   documento: string;
@@ -57,10 +55,10 @@ interface Institution {
 
 const StudentList: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showAlert, setShowAlert] = useState<boolean>(false);
-  const [alertMessage, setAlertMessage] = useState<string>('');
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
   const history = useHistory();
   
   const unitJson = localStorage.getItem('selectedUnit');
@@ -70,7 +68,6 @@ const StudentList: React.FC = () => {
 
   useEffect(() => {
     if (!unit) {
-      console.log('No hay unidad seleccionada, redirigiendo...');
       history.replace('/units');
       return;
     }
@@ -83,30 +80,16 @@ const StudentList: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
       const unitId = unit._id;
-      console.log('📚 Cargando estudiantes para unidad:', { unitId, unitName: unit.name });
-      
       const data = await getStudentsByUnit(unitId);
-      console.log('✅ Datos de estudiantes recibidos:', data);
       
       let studentsArray: Student[] = [];
-      
       if (Array.isArray(data)) {
         studentsArray = data;
-      } else if (data && typeof data === 'object') {
-        if (Array.isArray((data as any).students)) {
-          studentsArray = (data as any).students;
-        } else if (Array.isArray((data as any).data)) {
-          studentsArray = (data as any).data;
-        } else if (Array.isArray((data as any).estudiantes)) {
-          studentsArray = (data as any).estudiantes;
-        } else {
-          const possibleArrays = Object.values(data).filter(v => Array.isArray(v));
-          if (possibleArrays.length > 0) {
-            studentsArray = possibleArrays[0] as Student[];
-          }
-        }
+      } else if (data && Array.isArray((data as any).students)) {
+        studentsArray = (data as any).students;
+      } else if (data && Array.isArray((data as any).data)) {
+        studentsArray = (data as any).data;
       }
       
       const filteredStudents = studentsArray.filter((student: Student) => {
@@ -116,19 +99,14 @@ const StudentList: React.FC = () => {
         return true;
       });
       
-      console.log('📊 Estudiantes procesados:', filteredStudents.length);
       setStudents(filteredStudents);
       
       if (filteredStudents.length === 0) {
-        setAlertMessage('No hay estudiantes inscritos en esta unidad. Por favor, ejecute el seed con estudiantes de ejemplo.');
+        setAlertMessage('No hay estudiantes inscritos en esta unidad.');
         setShowAlert(true);
       }
-      
     } catch (err: any) {
-      console.error('❌ Error cargando estudiantes:', err);
       setError(err.message || 'No se pudieron cargar los estudiantes');
-      setAlertMessage(err.message || 'Error al cargar los estudiantes');
-      setShowAlert(true);
     } finally {
       setLoading(false);
     }
@@ -136,14 +114,14 @@ const StudentList: React.FC = () => {
 
   const goToCreateSession = () => {
     if (students.length === 0) {
-      setAlertMessage('No hay estudiantes inscritos. No se puede crear una sesión sin estudiantes.');
+      setAlertMessage('No hay estudiantes inscritos. No se puede crear una sesión.');
       setShowAlert(true);
       return;
     }
     history.push('/session');
   };
 
-  const getInitials = (name: string): string => {
+  const getInitials = (name: string) => {
     return name
       .split(' ')
       .map(word => word[0])
@@ -171,11 +149,11 @@ const StudentList: React.FC = () => {
           </IonToolbar>
         </IonHeader>
         <IonContent className="ion-padding">
-          <div style={{ maxWidth: '600px', margin: '0 auto', width: '100%', textAlign: 'center' }}>
+          <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
             <IonText color="danger">
               <p>No hay unidad seleccionada</p>
             </IonText>
-            <IonButton expand="block" onClick={() => history.push('/units')} style={{ maxWidth: '300px', margin: '0 auto' }}>
+            <IonButton expand="block" onClick={() => history.push('/units')}>
               Seleccionar Unidad
             </IonButton>
           </div>
@@ -197,25 +175,28 @@ const StudentList: React.FC = () => {
       
       <IonContent className="ion-padding">
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-          <IonRefresherContent 
-            pullingIcon={refreshOutline} 
-            pullingText="Desliza para actualizar" 
-            refreshingSpinner="circles"
-          />
+          <IonRefresherContent pullingIcon={refreshOutline} pullingText="Desliza para actualizar" />
         </IonRefresher>
 
         <IonLoading isOpen={loading} message="Cargando estudiantes..." />
 
-        <div style={{ maxWidth: '600px', margin: '0 auto', width: '100%' }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
           
-          {/* Título centrado */}
+          {/* Título y contador */}
           <div style={{ textAlign: 'center', marginBottom: '20px', marginTop: '20px' }}>
-            <h2 style={{ fontWeight: 'bold', fontSize: '24px', marginBottom: '8px', margin: 0 }}>
-              Estudiantes Inscritos
+            <h2 style={{ fontWeight: 'bold', fontSize: '24px', marginBottom: '8px' }}>
+              Lista de Estudiantes
             </h2>
-            <p style={{ color: '#666', fontSize: '14px', margin: '5px 0 0 0' }}>
-              {unit?.name}
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <IonChip color="primary">
+                <IonIcon icon={peopleOutline} />
+                <IonLabel>{students.length} Estudiantes</IonLabel>
+              </IonChip>
+              <IonChip color="secondary">
+                <IonIcon icon={schoolOutline} />
+                <IonLabel>{unit.name}</IonLabel>
+              </IonChip>
+            </div>
           </div>
 
           {/* Información de la unidad */}
@@ -224,107 +205,123 @@ const StudentList: React.FC = () => {
             padding: '12px 16px', 
             borderRadius: '12px',
             marginBottom: '20px',
-            textAlign: 'center'
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '10px'
           }}>
-            <p style={{ margin: 0 }}>
-              <strong>{unit?.name}</strong> | Código: {unit?.code}
-            </p>
+            <div>
+              <strong>{unit.name}</strong>
+              <span style={{ marginLeft: '10px', color: '#666', fontSize: '12px' }}>Código: {unit.code}</span>
+            </div>
             {institution && (
-              <p style={{ margin: '5px 0 0 0', fontSize: '12px', opacity: 0.7 }}>
-                {institution.name}
-              </p>
+              <IonBadge color="success">{institution.name}</IonBadge>
             )}
           </div>
 
-          {/* Contador de estudiantes */}
-          {!loading && !error && (
-            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-              <IonChip color="primary">
-                <IonIcon icon={peopleOutline} />
-                <IonLabel>{students.length} Estudiantes inscritos</IonLabel>
-              </IonChip>
-            </div>
-          )}
-
-          {/* Mensaje de error */}
           {error && (
-            <div style={{ 
-              backgroundColor: '#ffebee', 
-              padding: '12px', 
-              borderRadius: '8px',
-              marginBottom: '15px',
-              textAlign: 'center'
-            }}>
-              <IonText color="danger">
-                <p style={{ margin: 0 }}>{error}</p>
-              </IonText>
+            <div style={{ backgroundColor: '#ffebee', padding: '12px', borderRadius: '12px', marginBottom: '20px', textAlign: 'center' }}>
+              <IonText color="danger"><p style={{ margin: 0 }}>{error}</p></IonText>
             </div>
           )}
 
-          {/* Lista de estudiantes */}
+          {/* Tabla de estudiantes */}
           {!loading && !error && (
             <>
               {students.length === 0 ? (
                 <div style={{ textAlign: 'center', marginTop: '50px' }}>
                   <IonIcon icon={personOutline} style={{ fontSize: '64px', opacity: 0.5 }} />
-                  <IonText color="warning">
-                    <p style={{ marginTop: '10px' }}>No hay estudiantes inscritos en esta unidad</p>
-                  </IonText>
-                  <IonButton fill="clear" onClick={loadStudents}>
-                    Reintentar
-                  </IonButton>
+                  <IonText color="warning"><p>No hay estudiantes inscritos</p></IonText>
                 </div>
               ) : (
-                <IonList style={{ background: 'transparent', padding: 0 }}>
-                  {students.map((student, index) => (
-                    <IonCard key={student._id || index} style={{ margin: '12px 0', borderRadius: '16px' }}>
-                      <IonItem detail={false} lines="none">
-                        <IonAvatar slot="start">
-                          <div style={{ 
-                            backgroundColor: '#4CAF50', 
-                            width: '44px', 
-                            height: '44px', 
+                <div style={{ 
+                  backgroundColor: 'white', 
+                  borderRadius: '16px', 
+                  overflow: 'hidden',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                }}>
+                  {/* Cabecera de la tabla */}
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '50px 1fr 1.5fr 0.8fr',
+                    backgroundColor: '#4CAF50',
+                    color: 'white',
+                    padding: '12px 16px',
+                    fontWeight: 'bold',
+                    fontSize: '14px'
+                  }}>
+                    <div>#</div>
+                    <div>Nombre</div>
+                    <div>Documento</div>
+                    <div>Matrícula</div>
+                  </div>
+                  
+                  {/* Cuerpo de la tabla */}
+                  <div>
+                    {students.map((student, index) => (
+                      <div 
+                        key={student._id || index}
+                        style={{ 
+                          display: 'grid', 
+                          gridTemplateColumns: '50px 1fr 1.5fr 0.8fr',
+                          padding: '12px 16px',
+                          borderBottom: '1px solid #f0f0f0',
+                          backgroundColor: index % 2 === 0 ? '#fff' : '#f9f9f9',
+                          fontSize: '14px',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <div style={{ fontWeight: 'bold', color: '#4CAF50' }}>{index + 1}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{
+                            backgroundColor: '#4CAF50',
+                            width: '32px',
+                            height: '32px',
                             borderRadius: '50%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             color: 'white',
                             fontWeight: 'bold',
-                            fontSize: '18px'
+                            fontSize: '12px'
                           }}>
                             {getInitials(student.nombre)}
                           </div>
-                        </IonAvatar>
-                        <IonLabel>
-                          <h2 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 4px 0' }}>
-                            {student.nombre}
-                          </h2>
-                          <p style={{ fontSize: '14px', margin: '2px 0' }}>
-                            Documento: {student.documento}
-                          </p>
-                          {student.matricula && (
-                            <IonBadge color="medium" style={{ marginTop: '5px' }}>
+                          <span>{student.nombre}</span>
+                        </div>
+                        <div>
+                          <IonIcon icon={idCardOutline} style={{ fontSize: '14px', marginRight: '8px', verticalAlign: 'middle', color: '#666' }} />
+                          {student.documento}
+                        </div>
+                        <div>
+                          {student.matricula ? (
+                            <IonBadge color="medium" style={{ fontSize: '12px' }}>
                               {student.matricula}
                             </IonBadge>
+                          ) : (
+                            <span style={{ color: '#ccc' }}>—</span>
                           )}
-                        </IonLabel>
-                        <IonIcon icon={schoolOutline} slot="end" color="medium" style={{ fontSize: '24px' }} />
-                      </IonItem>
-                    </IonCard>
-                  ))}
-                </IonList>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
 
-              {/* Botón para crear sesión QR centrado */}
-              <div style={{ textAlign: 'center', marginTop: '24px', marginBottom: '30px' }}>
+              {/* Botón flotante para crear sesión */}
+              <div style={{ position: 'fixed', bottom: '20px', right: '20px' }}>
                 <IonButton 
-                  expand="block" 
                   onClick={goToCreateSession}
                   disabled={students.length === 0}
-                  style={{ maxWidth: '300px', margin: '0 auto', height: '48px' }}
+                  style={{ 
+                    width: '56px', 
+                    height: '56px', 
+                    borderRadius: '28px',
+                    boxShadow: '0 4px 12px rgba(76,175,80,0.4)'
+                  }}
                 >
-                  <IonIcon slot="start" icon={qrCodeOutline} />
-                  Crear Sesión con QR
+                  <IonIcon icon={qrCodeOutline} style={{ fontSize: '28px' }} />
                 </IonButton>
               </div>
             </>

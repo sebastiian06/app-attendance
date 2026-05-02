@@ -96,3 +96,102 @@ ion-input {
   --border-radius: 12px;
   --background: white;
 }
+
+/* app/src/theme/variables.css - Agregar al final */
+
+/* Estilos para segmentos (mejorar apariencia) */
+ion-segment {
+  background: #f0f2f5;
+  border-radius: 12px;
+  padding: 4px;
+}
+
+ion-segment-button {
+  --border-radius: 10px;
+  --indicator-color: #4CAF50;
+  --border-width: 0;
+  --background-checked: #4CAF50;
+  --color-checked: white;
+  font-weight: 500;
+  margin: 0 2px;
+}
+
+ion-segment-button::part(indicator) {
+  background: #4CAF50;
+  border-radius: 10px;
+}
+
+/* Estilos para botones flotantes */
+ion-fab-button {
+  --background: #4CAF50;
+  --background-activated: #43A047;
+  --box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+/* Estilos para tarjetas */
+ion-card {
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* 🔹 Login - inputs personalizados */
+.login-input {
+  --background: #ffffff;
+  --color: #000000;
+  --placeholder-color: #999999;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 14px;
+  --padding-bottom: 14px;
+  border-radius: 14px;
+}
+
+/* 🔥 clave: fuerza el color REAL del texto */
+.login-input input {
+  color: #000000 !important;
+}
+
+/* ===== MATERIAL INPUT ===== */
+.material-input {
+  --background: #f5f5f5;
+  --color: #000;
+  --placeholder-color: #999;
+  --padding-start: 14px;
+  --padding-end: 14px;
+  height: 48px;
+  border-radius: 10px;
+  margin-top: 6px;
+}
+
+/* 🔥 fuerza el texto real */
+.material-input input {
+  color: #000 !important;
+}
+
+/* efecto focus tipo Material */
+.material-input:focus-within {
+  --background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(76,175,80,0.2);
+}
+
+
+/* ===== BOTÓN PRINCIPAL ===== */
+.btn-primary {
+  width: 100%;
+  max-width: 260px;
+  height: 48px;
+  --border-radius: 12px;
+  --background: linear-gradient(135deg, #4CAF50, #2E7D32);
+  font-weight: 600;
+}
+
+/* ===== BOTÓN SECUNDARIO ===== */
+.btn-secondary {
+  width: 100%;
+  max-width: 260px;
+  height: 48px;
+  --border-radius: 12px;
+  --background: #E8F5E9;
+  --color: #2E7D32;
+  font-weight: 500;
+}
