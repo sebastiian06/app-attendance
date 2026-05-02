@@ -1,95 +1,52 @@
-import { Redirect, Route } from 'react-router-dom';
-import {
-  IonApp,
-  IonIcon,
-  IonLabel,
-  IonRouterOutlet,
-  IonTabBar,
-  IonTabButton,
-  IonTabs,
-  setupIonicReact
-} from '@ionic/react';
-import { IonReactRouter } from '@ionic/react-router';
-import { ellipse, square, triangle } from 'ionicons/icons';
-import Login from './pages/Login';
-import Session from './pages/Session';
-import Results from './pages/Results';
-import Attendance from './pages/Attendance';
-import UnitSelection from './pages/UnitSelection';
+// app/src/App.tsx
+import { IonApp, IonRouterOutlet } from '@ionic/react';
+import { BrowserRouter, Route, Redirect } from 'react-router-dom';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
 
-/* Basic CSS for apps built with Ionic */
-import '@ionic/react/css/normalize.css';
-import '@ionic/react/css/structure.css';
-import '@ionic/react/css/typography.css';
+/* Importar las páginas */
+import Login from './pages/Login';
+import InstitutionSelection from './pages/InstitutionSelection';
+import UnitSelection from './pages/UnitSelection';
+import StudentList from './pages/StudentList';
+import Session from './pages/Session';
+import Results from './pages/Results';
+import Attendance from './pages/Attendance';
 
-/* Optional CSS utils that can be commented out */
-import '@ionic/react/css/padding.css';
-import '@ionic/react/css/float-elements.css';
-import '@ionic/react/css/text-alignment.css';
-import '@ionic/react/css/text-transformation.css';
-import '@ionic/react/css/flex-utils.css';
-import '@ionic/react/css/display.css';
+const App: React.FC = () => {
+  const isAuthenticated = () => {
+    return localStorage.getItem('token') !== null;
+  };
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
-
-/* import '@ionic/react/css/palettes/dark.always.css'; */
-/* import '@ionic/react/css/palettes/dark.class.css'; */
-import '@ionic/react/css/palettes/dark.system.css';
-
-/* Theme variables */
-import './theme/variables.css';
-
-setupIonicReact();
-
-const App: React.FC = () => (
-  <IonApp>
-    <IonReactRouter>
-      <IonTabs>
+  return (
+    <IonApp>
+      <BrowserRouter>
         <IonRouterOutlet>
-          <Route exact path="/login">
-            <Login />
+          <Route path="/attendance/:token" component={Attendance} exact />
+          <Route path="/login" component={Login} exact />
+          <Route path="/institutions" exact>
+            {isAuthenticated() ? <InstitutionSelection /> : <Redirect to="/login" />}
           </Route>
-          <Route exact path="/session">
-            <Session />
+          <Route path="/units" exact>
+            {isAuthenticated() ? <UnitSelection /> : <Redirect to="/login" />}
           </Route>
-          <Route path="/results">
-            <Results />
+          <Route path="/students" exact>
+            {isAuthenticated() ? <StudentList /> : <Redirect to="/login" />}
+          </Route>
+          <Route path="/session" exact>
+            {isAuthenticated() ? <Session /> : <Redirect to="/login" />}
+          </Route>
+          <Route path="/results" exact>
+            {isAuthenticated() ? <Results /> : <Redirect to="/login" />}
           </Route>
           <Route exact path="/">
-            {localStorage.getItem('token') ? (
-              <Redirect to="/session" />
-            ) : (
-              <Redirect to="/login" />
-            )}
+            {isAuthenticated() ? <Redirect to="/institutions" /> : <Redirect to="/login" />}
           </Route>
-          <Route path="/attendance/:token" component={Attendance} />
-          <Route path="/units" component={UnitSelection} />
         </IonRouterOutlet>
-        <IonTabBar slot="bottom">
-          <IonTabButton tab="login" href="/login">
-            <IonIcon aria-hidden="true" icon={triangle} />
-            <IonLabel>Login</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="session" href="/session">
-            <IonIcon aria-hidden="true" icon={ellipse} />
-            <IonLabel>Session</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="results" href="/results">
-            <IonIcon aria-hidden="true" icon={square} />
-            <IonLabel>Results</IonLabel>
-          </IonTabButton>
-        </IonTabBar>
-      </IonTabs>
-    </IonReactRouter>
-  </IonApp>
-);
+      </BrowserRouter>
+    </IonApp>
+  );
+};
 
 export default App;

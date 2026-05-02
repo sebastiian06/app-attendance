@@ -1,8 +1,15 @@
+// back/src/routes/public.routes.ts
 import { Router } from 'express';
-import { registerAttendance } from '../controllers/attendance.controller';
+import { registerPublicAttendance } from '../controllers/attendance.controller';
 
 const router = Router();
 
-router.post('/attendance/:token/register', registerAttendance);
+// Ruta pública para registrar asistencia (no requiere autenticación)
+router.post('/public/attendance/:token/register', registerPublicAttendance);
+
+// Ruta de prueba para verificar que el servidor responde
+router.get('/public/health', (req, res) => {
+  res.json({ status: 'OK', message: 'Servicio público disponible' });
+});
 
 export default router;
