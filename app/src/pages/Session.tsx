@@ -15,12 +15,21 @@ import {
   IonCardContent,
   IonButtons,
   IonBackButton,
-  IonAlert
+  IonAlert,
+  IonBadge
 } from '@ionic/react';
 import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { timeOutline, checkmarkCircleOutline, closeCircleOutline, refreshOutline } from 'ionicons/icons';
-import { createSession as createSessionAPI, activateSession } from '../services/api';
+import { 
+  timeOutline, 
+  checkmarkCircleOutline, 
+  closeCircleOutline, 
+  refreshOutline, 
+  qrCodeOutline,
+  peopleOutline,
+  hourglassOutline
+} from 'ionicons/icons';
+import { createSession as createSessionAPI } from '../services/api';
 
 const Session: React.FC = () => {
   const [session, setSession] = useState<any>(null);
@@ -31,7 +40,6 @@ const Session: React.FC = () => {
   const [alertMessage, setAlertMessage] = useState('');
   const history = useHistory();
 
-  // Obtener unidad e institución del localStorage
   const unitJson = localStorage.getItem('selectedUnit');
   const institutionJson = localStorage.getItem('selectedInstitution');
   const unit = unitJson ? JSON.parse(unitJson) : null;
@@ -54,7 +62,6 @@ const Session: React.FC = () => {
     }
   }, []);
 
-  // Iniciar countdown
   const startCountdown = (expiresAt: string) => {
     const interval = setInterval(() => {
       const now = new Date().getTime();
@@ -74,7 +81,6 @@ const Session: React.FC = () => {
     return () => clearInterval(interval);
   };
 
-  // Crear sesión
   const handleCreateSession = async () => {
     if (!unit || !institution) {
       setAlertMessage('Debe seleccionar una unidad e institución primero');
@@ -109,14 +115,12 @@ const Session: React.FC = () => {
     }
   };
 
-  // Cerrar sesión manualmente
   const handleCloseSession = () => {
     setSession(null);
     localStorage.removeItem('currentSession');
     setTimeLeft(0);
   };
 
-  // Ver resultados
   const goToResults = () => {
     if (session && session._id) {
       localStorage.setItem('currentSessionId', session._id);
@@ -124,7 +128,6 @@ const Session: React.FC = () => {
     }
   };
 
-  // Regenerar sesión
   const handleRegenerate = () => {
     handleCloseSession();
     setTimeout(() => {
@@ -132,7 +135,12 @@ const Session: React.FC = () => {
     }, 500);
   };
 
-  // Validar unidad
+  const formatTimeLeft = () => {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   if (!unit) {
     return (
       <IonPage>
@@ -145,23 +153,18 @@ const Session: React.FC = () => {
           </IonToolbar>
         </IonHeader>
         <IonContent className="ion-padding">
-          <IonText color="danger">
-            <p>Debe seleccionar una unidad primero</p>
-          </IonText>
-          <IonButton expand="block" onClick={() => history.push('/units')}>
-            Seleccionar Unidad
-          </IonButton>
+          <div style={{ maxWidth: '600px', margin: '0 auto', width: '100%', textAlign: 'center' }}>
+            <IonText color="danger">
+              <p>Debe seleccionar una unidad primero</p>
+            </IonText>
+            <IonButton expand="block" onClick={() => history.push('/units')} style={{ maxWidth: '300px', margin: '0 auto' }}>
+              Seleccionar Unidad
+            </IonButton>
+          </div>
         </IonContent>
       </IonPage>
     );
   }
-
-  // Formatear tiempo restante
-  const formatTimeLeft = () => {
-    const minutes = Math.floor(timeLeft / 60);
-    const seconds = timeLeft % 60;
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
 
   return (
     <IonPage>
@@ -173,7 +176,7 @@ const Session: React.FC = () => {
           <IonTitle>Sesión QR</IonTitle>
           <IonButtons slot="end">
             {session && (
-              <IonButton onClick={goToResults}>
+              <IonButton onClick={goToResults} style={{ fontWeight: 'bold' }}>
                 Resultados
               </IonButton>
             )}
@@ -182,80 +185,145 @@ const Session: React.FC = () => {
       </IonHeader>
 
       <IonContent className="ion-padding">
-        <IonLoading isOpen={loading} message={session ? "Activando sesión..." : "Creando sesión..."} />
+        <div style={{ maxWidth: '600px', margin: '0 auto', width: '100%' }}>
+          
+          {/* Título centrado */}
+          <div style={{ textAlign: 'center', marginBottom: '20px', marginTop: '20px' }}>
+            <h2 style={{ fontWeight: 'bold', fontSize: '24px', marginBottom: '8px', margin: 0 }}>
+              Sesión de Asistencia
+            </h2>
+            <p style={{ color: '#666', fontSize: '14px', margin: '5px 0 0 0' }}>
+              Genera un código QR para tomar asistencia
+            </p>
+          </div>
 
-        {error && (
-          <IonText color="danger">
-            <p>{error}</p>
-          </IonText>
-        )}
+          <IonLoading isOpen={loading} message={session ? "Activando sesión..." : "Creando sesión..."} />
 
-        {/* Información de la unidad */}
-        <IonCard>
-          <IonCardContent>
-            <h3>{unit.name}</h3>
-            <p>Código: {unit.code}</p>
-            <p>Institución: {institution?.name || 'No especificada'}</p>
-          </IonCardContent>
-        </IonCard>
+          {error && (
+            <IonText color="danger">
+              <p style={{ textAlign: 'center' }}>{error}</p>
+            </IonText>
+          )}
 
-        {/* Botón crear sesión */}
-        {!session ? (
-          <IonButton expand="block" onClick={handleCreateSession}>
-            Crear Sesión con QR
-          </IonButton>
-        ) : (
-          <>
-            {/* Información de la sesión */}
-            <IonCard>
-              <IonCardContent>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                  <h3 style={{ margin: 0 }}>Sesión Activa</h3>
-                  <IonChip color={timeLeft > 0 ? 'success' : 'danger'}>
-                    <IonIcon icon={timeLeft > 0 ? checkmarkCircleOutline : closeCircleOutline} />
-                    <span style={{ marginLeft: '5px' }}>{timeLeft > 0 ? 'Activa' : 'Expirada'}</span>
-                  </IonChip>
-                </div>
-                
-                <p><strong>Token:</strong> <code>{session.qrToken}</code></p>
-                {session.roomCode && (
-                  <p><strong>Código de sala:</strong> <code style={{ fontSize: '24px', fontWeight: 'bold' }}>{session.roomCode}</code></p>
-                )}
-                <p><strong>Tiempo restante:</strong> {formatTimeLeft()}</p>
-              </IonCardContent>
-            </IonCard>
+          {/* Información de la unidad */}
+          <div style={{ 
+            backgroundColor: '#E8F5E9', 
+            padding: '12px 16px', 
+            borderRadius: '12px',
+            marginBottom: '20px',
+            textAlign: 'center'
+          }}>
+            <p style={{ margin: 0 }}>
+              <strong>{unit?.name}</strong>
+            </p>
+            <p style={{ margin: '5px 0 0 0', fontSize: '12px', opacity: 0.7 }}>
+              {institution?.name}
+            </p>
+          </div>
 
-            {/* Código QR */}
-            <div style={{ textAlign: 'center', marginTop: 20, marginBottom: 20 }}>
-              <QRCodeCanvas
-                value={`http://localhost:5173/attendance/${session.qrToken}`}
-                size={200}
-              />
-              <p style={{ marginTop: 10, fontSize: 12, color: '#666' }}>
-                Escanea el QR para registrar asistencia
-              </p>
+          {/* Botón crear sesión centrado */}
+          {!session ? (
+            <div style={{ textAlign: 'center', marginTop: '30px' }}>
+              <IonButton 
+                onClick={handleCreateSession} 
+                style={{ height: '48px', fontWeight: 'bold' }}
+                expand="block"
+              >
+                <IonIcon slot="start" icon={qrCodeOutline} />
+                Crear Sesión con QR
+              </IonButton>
             </div>
+          ) : (
+            <>
+              {/* Tarjeta de información */}
+              <IonCard style={{ borderRadius: '16px', marginBottom: '20px' }}>
+                <IonCardContent style={{ textAlign: 'center' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
+                    <IonChip color={timeLeft > 0 ? 'success' : 'danger'}>
+                      <IonIcon icon={timeLeft > 0 ? checkmarkCircleOutline : closeCircleOutline} />
+                      <span style={{ marginLeft: '5px' }}>
+                        {timeLeft > 0 ? 'Sesión Activa' : 'Expirada'}
+                      </span>
+                    </IonChip>
+                  </div>
+                  
+                  <div style={{ 
+                    backgroundColor: '#F5F5F5', 
+                    padding: '10px', 
+                    borderRadius: '8px',
+                    marginBottom: '15px'
+                  }}>
+                    <p style={{ margin: '0', fontSize: '12px', color: '#666' }}>Token de sesión</p>
+                    <code style={{ fontSize: '16px', fontWeight: 'bold' }}>{session.qrToken}</code>
+                  </div>
+                  
+                  {session.roomCode && (
+                    <div style={{ 
+                      backgroundColor: '#E8F5E9', 
+                      padding: '10px', 
+                      borderRadius: '8px',
+                      marginBottom: '15px'
+                    }}>
+                      <p style={{ margin: '0', fontSize: '12px', color: '#666' }}>Código de sala</p>
+                      <strong style={{ fontSize: '28px', color: '#4CAF50' }}>{session.roomCode}</strong>
+                    </div>
+                  )}
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    <IonIcon icon={hourglassOutline} color="medium" />
+                    <p style={{ margin: 0 }}>
+                      <strong>Tiempo restante:</strong> {formatTimeLeft()}
+                    </p>
+                  </div>
+                </IonCardContent>
+              </IonCard>
 
-            {/* Botones de acción */}
-            <IonButton 
-              expand="block" 
-              color="danger" 
-              onClick={handleCloseSession}
-              disabled={timeLeft === 0}
-            >
-              Cerrar Sesión
-            </IonButton>
-            
-            <IonButton 
-              expand="block" 
-              fill="outline" 
-              onClick={handleRegenerate}
-            >
-              <IonIcon slot="start" icon={refreshOutline} />
-              Regenerar QR
-            </IonButton>
-          </>
-        )}
+              {/* Código QR centrado */}
+              <div style={{ 
+                textAlign: 'center', 
+                marginTop: 20, 
+                marginBottom: 20,
+                backgroundColor: 'white',
+                padding: '20px',
+                borderRadius: '20px',
+                width: 'fit-content',
+                margin: '0 auto 20px auto',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+              }}>
+                <QRCodeCanvas
+                  value={`http://localhost:5173/attendance/${session.qrToken}`}
+                  size={200}
+                />
+                <p style={{ marginTop: 15, fontSize: 12, color: '#666' }}>
+                  📱 Escanea el QR para registrar asistencia
+                </p>
+              </div>
+
+              {/* Botones centrados */}
+              <div style={{ textAlign: 'center', marginTop: 20 }}>
+                <IonButton 
+                  expand="block" 
+                  color="danger" 
+                  onClick={handleCloseSession}
+                  disabled={timeLeft === 0}
+                  style={{ maxWidth: '300px', margin: '0 auto 10px auto', fontWeight: 'bold' }}
+                >
+                  Cerrar Sesión
+                </IonButton>
+                
+                <IonButton 
+                  expand="block" 
+                  fill="outline" 
+                  onClick={handleRegenerate}
+                  style={{ maxWidth: '300px', margin: '0 auto' }}
+                >
+                  <IonIcon slot="start" icon={refreshOutline} />
+                  Regenerar QR
+                </IonButton>
+              </div>
+            </>
+          )}
+        </div>
 
         <IonAlert
           isOpen={showAlert}

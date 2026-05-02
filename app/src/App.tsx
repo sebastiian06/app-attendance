@@ -1,6 +1,7 @@
-// app/src/App.tsx
+// app/src/App.tsx (con BottomNav en todas las páginas protegidas)
 import { IonApp, IonRouterOutlet } from '@ionic/react';
-import { BrowserRouter, Route, Redirect } from 'react-router-dom';
+import { IonReactRouter } from '@ionic/react-router';
+import { Route, Redirect } from 'react-router-dom';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -13,6 +14,10 @@ import StudentList from './pages/StudentList';
 import Session from './pages/Session';
 import Results from './pages/Results';
 import Attendance from './pages/Attendance';
+import Profile from './pages/Profile';
+import BottomNav from './components/BottomNav';
+
+const IonReactRouterWithChildren = IonReactRouter as any;
 
 const App: React.FC = () => {
   const isAuthenticated = () => {
@@ -21,30 +26,86 @@ const App: React.FC = () => {
 
   return (
     <IonApp>
-      <BrowserRouter>
+      <IonReactRouterWithChildren>
         <IonRouterOutlet>
-          <Route path="/attendance/:token" component={Attendance} exact />
-          <Route path="/login" component={Login} exact />
-          <Route path="/institutions" exact>
-            {isAuthenticated() ? <InstitutionSelection /> : <Redirect to="/login" />}
+          {/* Ruta pública - no requiere autenticación */}
+          <Route path="/attendance/:token" component={Attendance} />
+          
+          {/* Ruta de login */}
+          <Route path="/login" component={Login} />
+          
+          {/* Rutas protegidas con BottomNav */}
+          <Route path="/institutions">
+            {isAuthenticated() ? (
+              <>
+                <InstitutionSelection />
+                <BottomNav />
+              </>
+            ) : (
+              <Redirect to="/login" />
+            )}
           </Route>
-          <Route path="/units" exact>
-            {isAuthenticated() ? <UnitSelection /> : <Redirect to="/login" />}
+          
+          <Route path="/units">
+            {isAuthenticated() ? (
+              <>
+                <UnitSelection />
+                <BottomNav />
+              </>
+            ) : (
+              <Redirect to="/login" />
+            )}
           </Route>
-          <Route path="/students" exact>
-            {isAuthenticated() ? <StudentList /> : <Redirect to="/login" />}
+          
+          <Route path="/students">
+            {isAuthenticated() ? (
+              <>
+                <StudentList />
+                <BottomNav />
+              </>
+            ) : (
+              <Redirect to="/login" />
+            )}
           </Route>
-          <Route path="/session" exact>
-            {isAuthenticated() ? <Session /> : <Redirect to="/login" />}
+          
+          <Route path="/session">
+            {isAuthenticated() ? (
+              <>
+                <Session />
+                <BottomNav />
+              </>
+            ) : (
+              <Redirect to="/login" />
+            )}
           </Route>
-          <Route path="/results" exact>
-            {isAuthenticated() ? <Results /> : <Redirect to="/login" />}
+          
+          <Route path="/results">
+            {isAuthenticated() ? (
+              <>
+                <Results />
+                <BottomNav />
+              </>
+            ) : (
+              <Redirect to="/login" />
+            )}
           </Route>
+          
+          <Route path="/profile">
+            {isAuthenticated() ? (
+              <>
+                <Profile />
+                <BottomNav />
+              </>
+            ) : (
+              <Redirect to="/login" />
+            )}
+          </Route>
+          
           <Route exact path="/">
             {isAuthenticated() ? <Redirect to="/institutions" /> : <Redirect to="/login" />}
           </Route>
         </IonRouterOutlet>
-      </BrowserRouter>
+      </IonReactRouterWithChildren>
     </IonApp>
   );
 };

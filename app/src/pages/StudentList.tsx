@@ -19,13 +19,21 @@ import {
   IonRefresher,
   IonRefresherContent,
   IonAlert,
-  IonBadge
+  IonBadge,
+  IonCard
 } from '@ionic/react';
 import { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
-import { personOutline, schoolOutline, refreshOutline, qrCodeOutline, peopleOutline } from 'ionicons/icons';
+import { 
+  personOutline, 
+  schoolOutline, 
+  refreshOutline, 
+  qrCodeOutline, 
+  peopleOutline
+} from 'ionicons/icons';
 import { getStudentsByUnit } from '../services/api';
 
+// Interfaces
 interface Student {
   _id: string;
   documento: string;
@@ -49,21 +57,18 @@ interface Institution {
 
 const StudentList: React.FC = () => {
   const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [showAlert, setShowAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState('');
+  const [showAlert, setShowAlert] = useState<boolean>(false);
+  const [alertMessage, setAlertMessage] = useState<string>('');
   const history = useHistory();
   
-  // Obtener datos del localStorage
   const unitJson = localStorage.getItem('selectedUnit');
   const institutionJson = localStorage.getItem('selectedInstitution');
-  
   const unit: AcademicUnit | null = unitJson ? JSON.parse(unitJson) : null;
   const institution: Institution | null = institutionJson ? JSON.parse(institutionJson) : null;
 
   useEffect(() => {
-    // Verificar si hay unidad seleccionada
     if (!unit) {
       console.log('No hay unidad seleccionada, redirigiendo...');
       history.replace('/units');
@@ -80,78 +85,38 @@ const StudentList: React.FC = () => {
       setError(null);
       
       const unitId = unit._id;
-      console.log('📚 Cargando estudiantes para unidad:', { 
-        unitId, 
-        unitName: unit.name,
-        unitCode: unit.code 
-      });
+      console.log('📚 Cargando estudiantes para unidad:', { unitId, unitName: unit.name });
       
       const data = await getStudentsByUnit(unitId);
       console.log('✅ Datos de estudiantes recibidos:', data);
-      console.log('✅ Tipo de datos:', typeof data);
-      console.log('✅ Es array:', Array.isArray(data));
       
       let studentsArray: Student[] = [];
       
-      // Manejar diferentes formatos de respuesta del backend
       if (Array.isArray(data)) {
-        // Si la respuesta es un array directamente
         studentsArray = data;
-        console.log('📊 Caso 1: data es array, longitud:', data.length);
-      } 
-      else if (data && typeof data === 'object') {
-        // Si la respuesta es un objeto, buscar el array en sus propiedades
-        const dataObj = data as Record<string, any>;
-        console.log('📊 Caso 2: data es objeto, propiedades:', Object.keys(dataObj));
-        
-        if (Array.isArray(dataObj.students)) {
-          studentsArray = dataObj.students;
-          console.log('📊 Caso 2a: data.students es array, longitud:', dataObj.students.length);
-        } 
-        else if (Array.isArray(dataObj.data)) {
-          studentsArray = dataObj.data;
-          console.log('📊 Caso 2b: data.data es array, longitud:', dataObj.data.length);
-        }
-        else if (Array.isArray(dataObj.estudiantes)) {
-          studentsArray = dataObj.estudiantes;
-          console.log('📊 Caso 2c: data.estudiantes es array, longitud:', dataObj.estudiantes.length);
-        }
-        else if (Array.isArray(dataObj.people)) {
-          studentsArray = dataObj.people;
-          console.log('📊 Caso 2d: data.people es array, longitud:', dataObj.people.length);
-        }
-        else {
-          // Buscar cualquier propiedad que sea un array
-          const keys = Object.keys(dataObj);
-          for (const key of keys) {
-            if (Array.isArray(dataObj[key]) && dataObj[key].length > 0) {
-              // Verificar si el primer elemento parece un estudiante
-              const firstItem = dataObj[key][0];
-              if (firstItem && (firstItem.nombre || firstItem.documento || firstItem._id)) {
-                studentsArray = dataObj[key];
-                console.log(`📊 Caso 2e: data.${key} es array de estudiantes, longitud:`, dataObj[key].length);
-                break;
-              }
-            }
+      } else if (data && typeof data === 'object') {
+        if (Array.isArray((data as any).students)) {
+          studentsArray = (data as any).students;
+        } else if (Array.isArray((data as any).data)) {
+          studentsArray = (data as any).data;
+        } else if (Array.isArray((data as any).estudiantes)) {
+          studentsArray = (data as any).estudiantes;
+        } else {
+          const possibleArrays = Object.values(data).filter(v => Array.isArray(v));
+          if (possibleArrays.length > 0) {
+            studentsArray = possibleArrays[0] as Student[];
           }
-        }
-        
-        // Si aún no hay estudiantes y el objeto tiene _id y nombre, podría ser un solo estudiante
-        if (studentsArray.length === 0 && dataObj._id && dataObj.nombre) {
-          studentsArray = [dataObj as Student];
-          console.log('📊 Caso 2f: Objeto único convertido a array');
         }
       }
       
-      // Filtrar solo estudiantes (si tienen roles, asegurar que sean estudiantes)
-      const filteredStudents = studentsArray.filter((student: any) => {
+      const filteredStudents = studentsArray.filter((student: Student) => {
         if (student.roles) {
           return student.roles.includes('student') || student.roles.length === 0;
         }
         return true;
       });
       
-      console.log('📊 Estudiantes después de filtrar:', filteredStudents.length);
+      console.log('📊 Estudiantes procesados:', filteredStudents.length);
       setStudents(filteredStudents);
       
       if (filteredStudents.length === 0) {
@@ -160,7 +125,7 @@ const StudentList: React.FC = () => {
       }
       
     } catch (err: any) {
-      console.error('❌ Error detallado cargando estudiantes:', err);
+      console.error('❌ Error cargando estudiantes:', err);
       setError(err.message || 'No se pudieron cargar los estudiantes');
       setAlertMessage(err.message || 'Error al cargar los estudiantes');
       setShowAlert(true);
@@ -178,7 +143,7 @@ const StudentList: React.FC = () => {
     history.push('/session');
   };
 
-  const getInitials = (name: string) => {
+  const getInitials = (name: string): string => {
     return name
       .split(' ')
       .map(word => word[0])
@@ -194,7 +159,6 @@ const StudentList: React.FC = () => {
     }, 1000);
   };
 
-  // Validar si no hay unidad seleccionada
   if (!unit) {
     return (
       <IonPage>
@@ -207,12 +171,14 @@ const StudentList: React.FC = () => {
           </IonToolbar>
         </IonHeader>
         <IonContent className="ion-padding">
-          <IonText color="danger">
-            <p>No hay unidad seleccionada</p>
-          </IonText>
-          <IonButton expand="block" onClick={() => history.push('/units')}>
-            Seleccionar Unidad
-          </IonButton>
+          <div style={{ maxWidth: '600px', margin: '0 auto', width: '100%', textAlign: 'center' }}>
+            <IonText color="danger">
+              <p>No hay unidad seleccionada</p>
+            </IonText>
+            <IonButton expand="block" onClick={() => history.push('/units')} style={{ maxWidth: '300px', margin: '0 auto' }}>
+              Seleccionar Unidad
+            </IonButton>
+          </div>
         </IonContent>
       </IonPage>
     );
@@ -240,118 +206,137 @@ const StudentList: React.FC = () => {
 
         <IonLoading isOpen={loading} message="Cargando estudiantes..." />
 
-        {/* Información de la unidad */}
-        <div style={{ 
-          marginBottom: '20px', 
-          padding: '15px', 
-          background: 'var(--ion-color-primary-tint, #e0e0e0)', 
-          borderRadius: '10px'
-        }}>
-          <IonText color="dark">
-            <h3 style={{ margin: 0, fontSize: '18px' }}>{unit.name}</h3>
-            <p style={{ margin: '5px 0 0 0', fontSize: '14px' }}>
-              Código: {unit.code} | {unit.type === 'ficha' ? 'Ficha' : 'Materia'}
+        <div style={{ maxWidth: '600px', margin: '0 auto', width: '100%' }}>
+          
+          {/* Título centrado */}
+          <div style={{ textAlign: 'center', marginBottom: '20px', marginTop: '20px' }}>
+            <h2 style={{ fontWeight: 'bold', fontSize: '24px', marginBottom: '8px', margin: 0 }}>
+              Estudiantes Inscritos
+            </h2>
+            <p style={{ color: '#666', fontSize: '14px', margin: '5px 0 0 0' }}>
+              {unit?.name}
+            </p>
+          </div>
+
+          {/* Información de la unidad */}
+          <div style={{ 
+            backgroundColor: '#E8F5E9', 
+            padding: '12px 16px', 
+            borderRadius: '12px',
+            marginBottom: '20px',
+            textAlign: 'center'
+          }}>
+            <p style={{ margin: 0 }}>
+              <strong>{unit?.name}</strong> | Código: {unit?.code}
             </p>
             {institution && (
               <p style={{ margin: '5px 0 0 0', fontSize: '12px', opacity: 0.7 }}>
                 {institution.name}
               </p>
             )}
-          </IonText>
-        </div>
+          </div>
 
-        {/* Contador de estudiantes */}
-        {!loading && !error && (
-          <IonChip color="primary" style={{ marginBottom: '15px' }}>
-            <IonIcon icon={peopleOutline} />
-            <IonLabel>{students.length} Estudiantes inscritos</IonLabel>
-          </IonChip>
-        )}
+          {/* Contador de estudiantes */}
+          {!loading && !error && (
+            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+              <IonChip color="primary">
+                <IonIcon icon={peopleOutline} />
+                <IonLabel>{students.length} Estudiantes inscritos</IonLabel>
+              </IonChip>
+            </div>
+          )}
 
-        {/* Mensaje de error */}
-        {error && (
-          <IonText color="danger">
-            <p style={{ marginBottom: '15px', padding: '10px', background: '#ffebee', borderRadius: '8px' }}>
-              {error}
-            </p>
-          </IonText>
-        )}
+          {/* Mensaje de error */}
+          {error && (
+            <div style={{ 
+              backgroundColor: '#ffebee', 
+              padding: '12px', 
+              borderRadius: '8px',
+              marginBottom: '15px',
+              textAlign: 'center'
+            }}>
+              <IonText color="danger">
+                <p style={{ margin: 0 }}>{error}</p>
+              </IonText>
+            </div>
+          )}
 
-        {/* Lista de estudiantes */}
-        {!loading && !error && (
-          <>
-            {students.length === 0 ? (
-              <div style={{ textAlign: 'center', marginTop: '50px' }}>
-                <IonIcon icon={personOutline} style={{ fontSize: '64px', opacity: 0.5 }} />
-                <IonText color="warning">
-                  <p style={{ marginTop: '10px' }}>No hay estudiantes inscritos en esta unidad</p>
-                </IonText>
-                <IonButton fill="clear" onClick={loadStudents}>
-                  Reintentar
+          {/* Lista de estudiantes */}
+          {!loading && !error && (
+            <>
+              {students.length === 0 ? (
+                <div style={{ textAlign: 'center', marginTop: '50px' }}>
+                  <IonIcon icon={personOutline} style={{ fontSize: '64px', opacity: 0.5 }} />
+                  <IonText color="warning">
+                    <p style={{ marginTop: '10px' }}>No hay estudiantes inscritos en esta unidad</p>
+                  </IonText>
+                  <IonButton fill="clear" onClick={loadStudents}>
+                    Reintentar
+                  </IonButton>
+                </div>
+              ) : (
+                <IonList style={{ background: 'transparent', padding: 0 }}>
+                  {students.map((student, index) => (
+                    <IonCard key={student._id || index} style={{ margin: '12px 0', borderRadius: '16px' }}>
+                      <IonItem detail={false} lines="none">
+                        <IonAvatar slot="start">
+                          <div style={{ 
+                            backgroundColor: '#4CAF50', 
+                            width: '44px', 
+                            height: '44px', 
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontWeight: 'bold',
+                            fontSize: '18px'
+                          }}>
+                            {getInitials(student.nombre)}
+                          </div>
+                        </IonAvatar>
+                        <IonLabel>
+                          <h2 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 4px 0' }}>
+                            {student.nombre}
+                          </h2>
+                          <p style={{ fontSize: '14px', margin: '2px 0' }}>
+                            Documento: {student.documento}
+                          </p>
+                          {student.matricula && (
+                            <IonBadge color="medium" style={{ marginTop: '5px' }}>
+                              {student.matricula}
+                            </IonBadge>
+                          )}
+                        </IonLabel>
+                        <IonIcon icon={schoolOutline} slot="end" color="medium" style={{ fontSize: '24px' }} />
+                      </IonItem>
+                    </IonCard>
+                  ))}
+                </IonList>
+              )}
+
+              {/* Botón para crear sesión QR centrado */}
+              <div style={{ textAlign: 'center', marginTop: '24px', marginBottom: '30px' }}>
+                <IonButton 
+                  expand="block" 
+                  onClick={goToCreateSession}
+                  disabled={students.length === 0}
+                  style={{ maxWidth: '300px', margin: '0 auto', height: '48px' }}
+                >
+                  <IonIcon slot="start" icon={qrCodeOutline} />
+                  Crear Sesión con QR
                 </IonButton>
               </div>
-            ) : (
-              <IonList>
-                {students.map((student, index) => (
-                  <IonItem key={student._id || index}>
-                    <IonAvatar slot="start">
-                      <div style={{ 
-                        backgroundColor: 'var(--ion-color-primary)', 
-                        width: '100%', 
-                        height: '100%', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        color: 'white',
-                        fontWeight: 'bold',
-                        fontSize: '18px'
-                      }}>
-                        {getInitials(student.nombre)}
-                      </div>
-                    </IonAvatar>
-                    <IonLabel>
-                      <h2 style={{ fontSize: '16px', fontWeight: 'bold' }}>{student.nombre}</h2>
-                      <p style={{ fontSize: '14px' }}>Documento: {student.documento}</p>
-                      {student.matricula && (
-                        <IonBadge color="medium" style={{ marginTop: '5px' }}>
-                          {student.matricula}
-                        </IonBadge>
-                      )}
-                    </IonLabel>
-                    <IonIcon icon={schoolOutline} slot="end" color="medium" />
-                  </IonItem>
-                ))}
-              </IonList>
-            )}
+            </>
+          )}
+        </div>
 
-            {/* Botón para crear sesión QR */}
-            <div style={{ marginTop: '20px', marginBottom: '30px' }}>
-              <IonButton 
-                expand="block" 
-                onClick={goToCreateSession}
-                disabled={students.length === 0}
-              >
-                <IonIcon slot="start" icon={qrCodeOutline} />
-                Crear Sesión con QR
-              </IonButton>
-            </div>
-          </>
-        )}
-
-        {/* Alertas */}
         <IonAlert
           isOpen={showAlert}
           onDidDismiss={() => setShowAlert(false)}
           header="Información"
           message={alertMessage}
-          buttons={[{
-            text: 'OK',
-            handler: () => {
-              if (alertMessage.includes('No hay estudiantes')) {
-                console.log('Usuario entendió que no hay estudiantes');
-              }
-            }
-          }]}
+          buttons={['OK']}
         />
       </IonContent>
     </IonPage>

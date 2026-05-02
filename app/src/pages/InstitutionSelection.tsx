@@ -1,3 +1,4 @@
+// app/src/pages/InstitutionSelection.tsx
 import {
   IonContent,
   IonPage,
@@ -11,9 +12,10 @@ import {
   IonText,
   IonButton,
   IonIcon,
+  IonCard,
+  IonBadge,
   IonRefresher,
-  IonRefresherContent,
-  IonAlert
+  IonRefresherContent
 } from '@ionic/react';
 import { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
@@ -33,15 +35,11 @@ const InstitutionSelection: React.FC = () => {
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showAlert, setShowAlert] = useState(false);
-  const [alertMessage, setAlertMessage] = useState('');
   const history = useHistory();
 
   useEffect(() => {
-    // Verificar si hay token
     const token = localStorage.getItem('token');
     if (!token) {
-      console.log('No hay token, redirigiendo a login');
       history.replace('/login');
       return;
     }
@@ -52,12 +50,7 @@ const InstitutionSelection: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('🔍 Cargando instituciones...');
-      
       const data = await getInstitutions();
-      console.log('📊 Datos recibidos:', data);
-      
-      // Manejar diferentes formatos de respuesta
       let institutionsArray: Institution[] = [];
       
       if (Array.isArray(data)) {
@@ -66,33 +59,17 @@ const InstitutionSelection: React.FC = () => {
         institutionsArray = data.data;
       } else if (data && Array.isArray(data.institutions)) {
         institutionsArray = data.institutions;
-      } else if (data && typeof data === 'object') {
-        // Si es un objeto, intentar extraer valores
-        institutionsArray = Object.values(data).filter(item => 
-          item && typeof item === 'object' && 'code' in item && 'name' in item
-        ) as Institution[];
       }
       
-      console.log('📊 Instituciones procesadas:', institutionsArray.length);
       setInstitutions(institutionsArray);
-      
-      if (institutionsArray.length === 0) {
-        setAlertMessage('No hay instituciones disponibles. Por favor, ejecute el seed en el backend.');
-        setShowAlert(true);
-      }
-      
     } catch (err: any) {
-      console.error('❌ Error cargando instituciones:', err);
       setError(err.message || 'No se pudieron cargar las instituciones');
-      setAlertMessage(err.message || 'Error al cargar las instituciones');
-      setShowAlert(true);
     } finally {
       setLoading(false);
     }
   };
 
   const selectInstitution = (institution: Institution) => {
-    console.log('📚 Institución seleccionada:', institution);
     localStorage.setItem('selectedInstitution', JSON.stringify(institution));
     history.push('/units');
   };
@@ -137,80 +114,81 @@ const InstitutionSelection: React.FC = () => {
       
       <IonContent className="ion-padding">
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
-          <IonRefresherContent pullingIcon={refreshOutline} pullingText="Desliza para actualizar" refreshingSpinner="circles" />
+          <IonRefresherContent pullingIcon={refreshOutline} pullingText="Desliza para actualizar" />
         </IonRefresher>
 
         <IonLoading isOpen={loading} message="Cargando instituciones..." />
 
-        {error && (
-          <IonText color="danger">
-            <p style={{ textAlign: 'center', margin: '20px' }}>{error}</p>
-          </IonText>
-        )}
-
-        {!loading && !error && institutions.length === 0 && (
-          <div style={{ textAlign: 'center', marginTop: '50px' }}>
-            <IonText color="warning">
-              <h3>No hay instituciones disponibles</h3>
-              <p>Por favor, asegúrate de:</p>
-              <ul style={{ textAlign: 'left', display: 'inline-block' }}>
-                <li>El backend está corriendo en puerto 4000</li>
-                <li>MongoDB está conectado</li>
-                <li>Ejecutaste el seed: npx ts-node src/scripts/seed.ts</li>
-              </ul>
-            </IonText>
-            <IonButton expand="block" onClick={loadInstitutions} style={{ marginTop: '20px' }}>
-              Reintentar
-            </IonButton>
+        {/* CONTENIDO CENTRADO */}
+        <div style={{ maxWidth: '600px', margin: '0 auto', width: '100%' }}>
+          
+          {/* Título centrado */}
+          <div style={{ textAlign: 'center', marginBottom: '30px', marginTop: '20px' }}>
+            <h2 style={{ fontWeight: 'bold', fontSize: '24px', marginBottom: '8px' }}>
+              Selecciona tu Institución
+            </h2>
+            <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>
+              Elige la institución donde deseas trabajar
+            </p>
           </div>
-        )}
 
-        <IonList>
-          {institutions.map((institution) => (
-            <IonItem 
-              key={institution._id} 
-              button 
-              onClick={() => selectInstitution(institution)}
-              detail={true}
-            >
-              <IonIcon 
-                icon={getInstitutionIcon(institution.context)} 
-                slot="start" 
-                color={getInstitutionColor(institution.code)}
-                style={{ fontSize: '28px' }}
-              />
-              <IonLabel>
-                <h2 style={{ fontWeight: 'bold' }}>{institution.name}</h2>
-                <p>Código: {institution.code}</p>
-                <p style={{ fontSize: '12px', marginTop: '5px' }}>
-                  {institution.context === 'university' ? 'Universidad' : 'Institución Técnica'}
-                </p>
-                {institution.labels && institution.labels.length > 0 && (
-                  <div style={{ display: 'flex', gap: '5px', marginTop: '5px' }}>
-                    {institution.labels.map((label, idx) => (
-                      <span key={idx} style={{ 
-                        backgroundColor: '#e0e0e0', 
-                        padding: '2px 8px', 
-                        borderRadius: '12px',
-                        fontSize: '10px'
-                      }}>
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </IonLabel>
-            </IonItem>
-          ))}
-        </IonList>
+          {/* Mensaje de error */}
+          {error && (
+            <IonText color="danger">
+              <p style={{ textAlign: 'center' }}>{error}</p>
+            </IonText>
+          )}
 
-        <IonAlert
-          isOpen={showAlert}
-          onDidDismiss={() => setShowAlert(false)}
-          header="Información"
-          message={alertMessage}
-          buttons={['OK']}
-        />
+          {/* Lista de instituciones centrada */}
+          {!loading && !error && (
+            <>
+              {institutions.length === 0 ? (
+                <div style={{ textAlign: 'center', marginTop: '50px' }}>
+                  <IonText color="warning">
+                    <p>No hay instituciones disponibles</p>
+                  </IonText>
+                  <IonButton fill="clear" onClick={loadInstitutions}>
+                    Reintentar
+                  </IonButton>
+                </div>
+              ) : (
+                <div style={{ padding: '0 16px' }}>
+                  {institutions.map((institution) => (
+                    <IonCard 
+                      key={institution._id} 
+                      style={{ 
+                        margin: '12px 0', 
+                        borderRadius: '16px',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => selectInstitution(institution)}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', padding: '12px' }}>
+                        <IonIcon 
+                          icon={getInstitutionIcon(institution.context)} 
+                          color={getInstitutionColor(institution.code)}
+                          style={{ fontSize: '40px', marginRight: '16px' }}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 'bold' }}>
+                            {institution.name}
+                          </h3>
+                          <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#666' }}>
+                            Código: {institution.code}
+                          </p>
+                          <IonBadge color={institution.code === 'SENA' ? 'success' : 'primary'}>
+                            {institution.context === 'university' ? 'Universidad' : 'Institución Técnica'}
+                          </IonBadge>
+                        </div>
+                        <IonIcon icon={businessOutline} style={{ fontSize: '24px', color: '#ccc' }} />
+                      </div>
+                    </IonCard>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </IonContent>
     </IonPage>
   );
