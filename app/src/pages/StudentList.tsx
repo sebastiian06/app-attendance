@@ -9,26 +9,24 @@ import {
   IonBackButton,
   IonLoading,
   IonText,
-  IonButton,
   IonIcon,
   IonChip,
   IonRefresher,
   IonRefresherContent,
   IonAlert,
   IonBadge,
-  IonLabel
+  IonLabel,
+  IonButton
 } from '@ionic/react';
 import { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import { 
   personOutline, 
+  schoolOutline, 
   refreshOutline, 
   qrCodeOutline, 
   peopleOutline,
-  checkmarkCircleOutline,
-  closeCircleOutline,
-  idCardOutline,
-  schoolOutline
+  idCardOutline
 } from 'ionicons/icons';
 import { getStudentsByUnit } from '../services/api';
 
@@ -78,27 +76,26 @@ const StudentList: React.FC = () => {
     if (!unit) return;
     
     try {
-      setLoading(true);
-      setError(null);
-      const unitId = unit._id;
-      const data = await getStudentsByUnit(unitId);
-      
-      let studentsArray: Student[] = [];
-      if (Array.isArray(data)) {
-        studentsArray = data;
-      } else if (data && Array.isArray((data as any).students)) {
-        studentsArray = (data as any).students;
-      } else if (data && Array.isArray((data as any).data)) {
-        studentsArray = (data as any).data;
-      }
-      
-      const filteredStudents = studentsArray.filter((student: Student) => {
-        if (student.roles) {
-          return student.roles.includes('student') || student.roles.length === 0;
+        setLoading(true);
+        setError(null);
+        const unitId = unit._id;
+        const data: any = await getStudentsByUnit(unitId);
+        let studentsArray: Student[] = [];
+
+        if (data && Array.isArray(data.students)) {
+          studentsArray = data.students;
+        } else if (data && Array.isArray(data.data)) {
+          studentsArray = data.data;
+        } else if (Array.isArray(data)) {
+          studentsArray = data;
         }
-        return true;
-      });
-      
+
+        const filteredStudents = studentsArray.filter((student: Student) => {
+          if (student.roles) {
+            return student.roles.includes('student') || student.roles.length === 0;
+          }
+          return true;
+        });
       setStudents(filteredStudents);
       
       if (filteredStudents.length === 0) {
@@ -173,7 +170,7 @@ const StudentList: React.FC = () => {
         </IonToolbar>
       </IonHeader>
       
-      <IonContent className="ion-padding">
+      <IonContent className="ion-padding" style={{ '--background': '#f5f7fa' }}>
         <IonRefresher slot="fixed" onIonRefresh={handleRefresh}>
           <IonRefresherContent pullingIcon={refreshOutline} pullingText="Desliza para actualizar" />
         </IonRefresher>
@@ -309,20 +306,43 @@ const StudentList: React.FC = () => {
                 </div>
               )}
 
-              {/* Botón flotante para crear sesión */}
-              <div style={{ position: 'fixed', bottom: '20px', right: '20px' }}>
-                <IonButton 
+              {/* Botón para crear sesión QR - Centrado y más grande */}
+              <div style={{ textAlign: 'center', marginTop: '32px', marginBottom: '30px' }}>
+                <button
                   onClick={goToCreateSession}
                   disabled={students.length === 0}
-                  style={{ 
-                    width: '56px', 
-                    height: '56px', 
-                    borderRadius: '28px',
-                    boxShadow: '0 4px 12px rgba(76,175,80,0.4)'
+                  style={{
+                    padding: '16px 32px',
+                    backgroundColor: '#4CAF50',
+                    border: 'none',
+                    borderRadius: '16px',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    fontSize: '18px',
+                    cursor: students.length !== 0 ? 'pointer' : 'not-allowed',
+                    transition: 'all 0.2s',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    opacity: students.length !== 0 ? 1 : 0.5,
+                    boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (students.length !== 0) {
+                      e.currentTarget.style.backgroundColor = '#43A047';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(76, 175, 80, 0.4)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#4CAF50';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(76, 175, 80, 0.3)';
                   }}
                 >
-                  <IonIcon icon={qrCodeOutline} style={{ fontSize: '28px' }} />
-                </IonButton>
+                  <IonIcon icon={qrCodeOutline} style={{ fontSize: '24px' }} />
+                  Crear Sesión con QR
+                </button>
               </div>
             </>
           )}

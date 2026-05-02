@@ -6,17 +6,16 @@ import {
   IonToolbar,
   IonTitle,
   IonContent,
-  IonButton,
-  IonText,
+  IonButtons,
+  IonBackButton,
   IonLoading,
+  IonText,
   IonIcon,
   IonChip,
   IonCard,
   IonCardContent,
-  IonButtons,
-  IonBackButton,
   IonAlert,
-  IonBadge
+  IonButton
 } from '@ionic/react';
 import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
@@ -153,11 +152,11 @@ const Session: React.FC = () => {
           </IonToolbar>
         </IonHeader>
         <IonContent className="ion-padding">
-          <div style={{ maxWidth: '600px', margin: '0 auto', width: '100%', textAlign: 'center' }}>
+          <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
             <IonText color="danger">
               <p>Debe seleccionar una unidad primero</p>
             </IonText>
-            <IonButton expand="block" onClick={() => history.push('/units')} style={{ maxWidth: '300px', margin: '0 auto' }}>
+            <IonButton expand="block" onClick={() => history.push('/units')}>
               Seleccionar Unidad
             </IonButton>
           </div>
@@ -174,18 +173,15 @@ const Session: React.FC = () => {
             <IonBackButton defaultHref="/students" />
           </IonButtons>
           <IonTitle>Sesión QR</IonTitle>
-          <IonButtons slot="end">
-            {session && (
-              <IonButton onClick={goToResults} style={{ fontWeight: 'bold' }}>
-                Resultados
-              </IonButton>
-            )}
-          </IonButtons>
         </IonToolbar>
       </IonHeader>
 
-      <IonContent className="ion-padding">
-        <div style={{ maxWidth: '600px', margin: '0 auto', width: '100%' }}>
+      <IonContent className="ion-padding" style={{ '--background': '#f5f7fa' }}>
+        <div style={{ 
+          maxWidth: '600px', 
+          margin: '0 auto', 
+          width: '100%'
+        }}>
           
           {/* Título centrado */}
           <div style={{ textAlign: 'center', marginBottom: '20px', marginTop: '20px' }}>
@@ -224,14 +220,32 @@ const Session: React.FC = () => {
           {/* Botón crear sesión centrado */}
           {!session ? (
             <div style={{ textAlign: 'center', marginTop: '30px' }}>
-              <IonButton 
-                onClick={handleCreateSession} 
-                style={{ height: '48px', fontWeight: 'bold' }}
-                expand="block"
+              <button
+                onClick={handleCreateSession}
+                style={{
+                  padding: '14px 28px',
+                  backgroundColor: '#4CAF50',
+                  border: 'none',
+                  borderRadius: '14px',
+                  color: 'white',
+                  fontWeight: '600',
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#43A047';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#4CAF50';
+                }}
               >
-                <IonIcon slot="start" icon={qrCodeOutline} />
+                <IonIcon icon={qrCodeOutline} style={{ fontSize: '18px' }} />
                 Crear Sesión con QR
-              </IonButton>
+              </button>
             </div>
           ) : (
             <>
@@ -299,27 +313,107 @@ const Session: React.FC = () => {
                 </p>
               </div>
 
-              {/* Botones centrados */}
-              <div style={{ textAlign: 'center', marginTop: 20 }}>
-                <IonButton 
-                  expand="block" 
-                  color="danger" 
+              {/* Botones centrados uno al lado del otro */}
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                gap: '12px',
+                marginTop: '24px',
+                flexWrap: 'wrap'
+              }}>
+                {/* Botón Cerrar Sesión */}
+                <button
                   onClick={handleCloseSession}
                   disabled={timeLeft === 0}
-                  style={{ maxWidth: '300px', margin: '0 auto 10px auto', fontWeight: 'bold' }}
+                  style={{
+                    padding: '12px 20px',
+                    backgroundColor: '#F44336',
+                    border: 'none',
+                    borderRadius: '12px',
+                    color: 'white',
+                    fontWeight: '600',
+                    fontSize: '14px',
+                    cursor: timeLeft !== 0 ? 'pointer' : 'not-allowed',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    opacity: timeLeft !== 0 ? 1 : 0.5,
+                    minWidth: '120px',
+                    justifyContent: 'center'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (timeLeft !== 0) {
+                      e.currentTarget.style.backgroundColor = '#D32F2F';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#F44336';
+                  }}
                 >
+                  <IonIcon icon={closeCircleOutline} style={{ fontSize: '18px' }} />
                   Cerrar Sesión
-                </IonButton>
-                
-                <IonButton 
-                  expand="block" 
-                  fill="outline" 
+                </button>
+
+                {/* Botón Regenerar QR */}
+                <button
                   onClick={handleRegenerate}
-                  style={{ maxWidth: '300px', margin: '0 auto' }}
+                  style={{
+                    padding: '12px 20px',
+                    backgroundColor: '#FF9800',
+                    border: 'none',
+                    borderRadius: '12px',
+                    color: 'white',
+                    fontWeight: '600',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    minWidth: '120px',
+                    justifyContent: 'center'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#F57C00';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#FF9800';
+                  }}
                 >
-                  <IonIcon slot="start" icon={refreshOutline} />
+                  <IonIcon icon={refreshOutline} style={{ fontSize: '18px' }} />
                   Regenerar QR
-                </IonButton>
+                </button>
+
+                {/* Botón Ver Resultados */}
+                <button
+                  onClick={goToResults}
+                  style={{
+                    padding: '12px 20px',
+                    backgroundColor: '#2196F3',
+                    border: 'none',
+                    borderRadius: '12px',
+                    color: 'white',
+                    fontWeight: '600',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    minWidth: '120px',
+                    justifyContent: 'center'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#1976D2';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#2196F3';
+                  }}
+                >
+                  <IonIcon icon={peopleOutline} style={{ fontSize: '18px' }} />
+                  Ver Resultados
+                </button>
               </div>
             </>
           )}
