@@ -130,7 +130,7 @@ app-attendance/
 - [X] Analizada
 - [X] Aceptada
 - [X] Implementada
-- [X] Superada (si aplica)
+- [X] Superada
 
 ## Referencias
 
