@@ -151,7 +151,8 @@ headers: {
 6. Token expira después de 8 horas
 
 ## Consecuencias
-**Positivas:**
+
+### Positivas:
 
 ✅ Sin necesidad de almacenar sesiones en BD
 
@@ -161,7 +162,7 @@ headers: {
 
 ✅ Escalable horizontalmente
 
-**Negativas:**
+### Negativas:
 
 ⚠️ No se puede invalidar un token antes de su expiración
 

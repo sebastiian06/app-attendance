@@ -145,7 +145,7 @@ docker exec app_attendance_api npm run seed
 ```
 ## Consecuencias
 
-**Positivas:**
+### Positivas:
 
 ✅ Un comando para todo el sistema
 
@@ -157,7 +157,7 @@ docker exec app_attendance_api npm run seed
 
 ✅ Ideal para evaluaciones
 
-**Negativas:**
+### Negativas:
 
 ⚠️ Requiere instalar Docker Desktop (gratuito)
 
@@ -165,14 +165,14 @@ docker exec app_attendance_api npm run seed
 
 ⚠️ Curva de aprendizaje inicial
 
-**Estados de la decisión:**
+## Estados de la decisión:
 - [X] Propuesta
 - [X] Analizada
 - [X] Aceptada
 - [X] Implementada
 - [X] Superada
 
-**Referencias:**
+## Referencias:
 
 - Documentación oficial de Docker Compose
 
